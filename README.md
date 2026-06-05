@@ -20,4 +20,21 @@ Planung abgeschlossen. Aktuelle Phase: **P0 – Fundament** (siehe Roadmap in PR
 ## Entwicklung
 
 Läuft in einer Multipass-VM (`alltagshelfer-dev`, Ubuntu 24.04) zur Isolation der
-npm-Dependencies. Details siehe PROJEKT.md, Abschnitt „Dev-Setup".
+npm-Dependencies.
+
+**Arbeitsteilung (wichtig unter Windows):** Der Quellcode (`src/`, Config) liegt auf
+dem Host und wird dort editiert. Die VM hält nur die generierten Ordner
+(`node_modules`, `.svelte-kit`, `build`); `node_modules` ist VM-lokal gebunden
+(schnell + umgeht die sshfs-Grenzen des Mounts). Vom VM erzeugte Dateien sind auf dem
+Host schreibgeschützt — daher **niemals Quellcode in der VM erzeugen**.
+
+**Dev-Server starten** (in der VM):
+
+```bash
+multipass exec alltagshelfer-dev -- bash /home/ubuntu/alltags-helfer/scripts/vm-dev.sh
+```
+
+Das Skript stellt den `node_modules`-Bind sicher (nötig nach jedem VM-Neustart) und
+startet Vite. Hinweis: PWA-Features (Service Worker, Installation, Push) brauchen
+HTTPS oder `localhost` — fürs Testen auf echten Geräten später via `mkcert` oder
+Cloudflare-Tunnel (siehe PROJEKT.md).
