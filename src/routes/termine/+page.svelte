@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
 	import { addAppointment, upcomingAppointments, deleteAppointment } from '$lib/db/appointments';
+	import Vorbereitung from '$lib/components/Vorbereitung.svelte';
 	import type { Appointment } from '$lib/db/types';
 
 	let liste = $state<Appointment[]>([]);
@@ -71,21 +72,22 @@
 			<p class="px-1 text-sm text-stone-400">Keine anstehenden Termine.</p>
 		{/if}
 		{#each liste as t (t.id)}
-			<div
-				class="flex items-start justify-between gap-3 rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-100"
-			>
-				<div>
-					<p class="text-sm font-medium text-stone-800">{t.title}</p>
-					<p class="mt-0.5 text-xs text-stone-400">
-						{fmt(t.startAt)}{t.location ? ` · ${t.location}` : ''}
-					</p>
+			<div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-100">
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<p class="text-sm font-medium text-stone-800">{t.title}</p>
+						<p class="mt-0.5 text-xs text-stone-400">
+							{fmt(t.startAt)}{t.location ? ` · ${t.location}` : ''}
+						</p>
+					</div>
+					<button
+						type="button"
+						onclick={() => deleteAppointment(t.id)}
+						aria-label="Löschen"
+						class="shrink-0 text-stone-300 hover:text-rose-500">✕</button
+					>
 				</div>
-				<button
-					type="button"
-					onclick={() => deleteAppointment(t.id)}
-					aria-label="Löschen"
-					class="shrink-0 text-stone-300 hover:text-rose-500">✕</button
-				>
+				<Vorbereitung appointmentId={t.id} />
 			</div>
 		{/each}
 	</div>
