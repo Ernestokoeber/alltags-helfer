@@ -15,7 +15,12 @@ Schlaf-Tracking und ein sanftes Morgen-Briefing.
 
 ## Status
 
-Planung abgeschlossen. Aktuelle Phase: **P0 – Fundament** (siehe Roadmap in PROJEKT.md).
+In Umsetzung — alle 5 Tabs funktional, **38 Tests grün**. Changelog/Details in
+**[PROJEKT.md](./PROJEKT.md)** (Abschnitt „Umgesetzt").
+
+**Funktionen:** Heute (Schnellnotiz + Briefing), Notizen (Suche/Bearbeiten/Tags/Pin/
+Kategorie), Termine (+ Vorbereitungs-Tasks), Bucketlist, Schlaf (mit Dauer-Berechnung),
+lokale Auto-Kategorie für „offen"-Notizen (kein Cloud).
 
 ## Entwicklung
 
