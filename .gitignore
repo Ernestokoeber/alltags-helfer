@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build-Ausgaben
+/build
+/dist
+.svelte-kit/
+/.vercel
+/.netlify
+
+# Umgebung / Secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Rust (Server, ab P6)
+/server/target/
+**/*.rs.bk
+
+# Lokale Zertifikate (mkcert)
+*.pem
