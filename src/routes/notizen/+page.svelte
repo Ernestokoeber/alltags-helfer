@@ -10,6 +10,7 @@
 		removeTag
 	} from '$lib/db/notes';
 	import type { Category, Note } from '$lib/db/types';
+	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
 	let alle = $state<Note[]>([]);
@@ -189,6 +190,7 @@
 						</button>
 						<span>{datumZeit(n.createdAt)}</span>
 					</div>
+					<KategorieVorschlag note={n} />
 				{/if}
 			</div>
 		{/each}

@@ -5,6 +5,7 @@
 	import { upcomingAppointments } from '$lib/db/appointments';
 	import { relativeDayLabel } from '$lib/format';
 	import type { Appointment, Category, Note, SleepEntry } from '$lib/db/types';
+	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
 
 	const heute = new Date();
 	const datum = heute.toLocaleDateString('de-DE', {
@@ -162,6 +163,7 @@
 						<span aria-hidden="true">·</span>
 						<span>{catLabel[n.category]}</span>
 					</div>
+					<KategorieVorschlag note={n} />
 				</div>
 			{/each}
 		{:else}
