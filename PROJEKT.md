@@ -12,21 +12,21 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 
 ---
 
-## Umgesetzt (Stand: 2026-06-05)
+## Umgesetzt (Stand: 2026-06-08)
 
 > Wird bei jedem Feature-Commit mitgepflegt.
 
 - **Fundament:** SvelteKit 2 + Svelte 5 + TypeScript + Tailwind v4, `adapter-static` (SPA), local-first via IndexedDB/Dexie (sync-fähiges Schema, UUID/`updatedAt`/Tombstone).
 - **Heute:** Schnellnotiz mit Kategorie; Briefing (letzte Schlafnacht + nächste Termine).
-- **Notizen:** Liste, Suche (Inhalt + Tags), Inline-Bearbeiten, Tags, Pin, Kategorie wechseln, Soft-Delete.
+- **Notizen:** Liste, Suche (Inhalt + Tags), **Kategoriefilter** (Alle/Privat/Geschäftlich/Offen, reine Helper-Funktion `src/lib/notes-filter.ts`), Inline-Bearbeiten, Tags, Pin, Kategorie wechseln, Soft-Delete.
 - **Termine:** anlegen / Liste anstehender / löschen + **Vorbereitungs-Tasks** (Checkliste je Termin).
 - **Bucketlist:** anlegen, erledigt umschalten, löschen.
 - **Schlaf:** Eintrag (Datum/Zeiten/Qualität/Notiz), **Dauer-Berechnung** (auch über Mitternacht), letzte Nächte.
 - **Auto-Kategorie:** lokaler Stichwort-Klassifizierer (`src/lib/classify.ts`, **kein Cloud**) schlägt für „offen"-Notizen Privat/Geschäftlich vor, Übernahme per Klick. *Gemini bewusst verworfen (Datenschutz).*
-- **Qualität:** **38 Tests grün** — Datenschicht (vitest + fake-indexeddb) und UI-Komponenten (`@testing-library/svelte` + happy-dom).
+- **Qualität:** **44 Tests grün** — Datenschicht (vitest + fake-indexeddb) und UI-Komponenten (`@testing-library/svelte` + happy-dom).
 - **Dev/Git:** Multipass-VM `alltagshelfer-dev`, `scripts/vm-dev.sh`; Arbeit direkt auf `main`.
 
-**Noch offen:** Notizen-Kategoriefilter, Bucketlist-Details (Zieldatum/Kategorie), Schlaf-Wochenschnitt, „Heute"-Tipp; `@vite-pwa` (installierbar/offline), HTTPS für iPhone-Test (mkcert/Tunnel), Erinnerungen/Push + Geräte-Sync (P6).
+**Noch offen:** Bucketlist-Details (Zieldatum/Kategorie), Schlaf-Wochenschnitt, „Heute"-Tipp; `@vite-pwa` (installierbar/offline), HTTPS für iPhone-Test (mkcert/Tunnel), Erinnerungen/Push + Geräte-Sync (P6).
 
 ---
 

@@ -10,6 +10,7 @@
 		removeTag
 	} from '$lib/db/notes';
 	import type { Category, Note } from '$lib/db/types';
+	import { filterNotes, type CategoryFilter } from '$lib/notes-filter';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
@@ -19,15 +20,18 @@
 		return () => sub.unsubscribe();
 	});
 
-	// Suche filtert clientseitig über Inhalt und Tags.
+	// Suche + Kategorie-Filter, clientseitig über die reine Helper-Funktion.
 	let suche = $state('');
-	const gefiltert = $derived.by(() => {
-		const q = suche.trim().toLowerCase();
-		if (!q) return alle;
-		return alle.filter(
-			(n) => n.content.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q))
-		);
-	});
+	let kategorie = $state<CategoryFilter>('alle');
+	const gefiltert = $derived(filterNotes(alle, suche, kategorie));
+
+	// Filter-Chips: Reihenfolge + Beschriftung.
+	const filterChips: { value: CategoryFilter; label: string }[] = [
+		{ value: 'alle', label: 'Alle' },
+		{ value: 'privat', label: 'Privat' },
+		{ value: 'geschaeftlich', label: 'Geschäftlich' },
+		{ value: 'offen', label: 'Offen' }
+	];
 
 	// Bearbeiten-Modus
 	let editId = $state<string | null>(null);
@@ -88,9 +92,27 @@
 			focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
 	/>
 
+	<div class="flex flex-wrap gap-1.5" role="group" aria-label="Notizen nach Kategorie filtern">
+		{#each filterChips as chip (chip.value)}
+			<button
+				type="button"
+				onclick={() => (kategorie = chip.value)}
+				aria-pressed={kategorie === chip.value}
+				class="rounded-full px-3 py-1 text-xs font-medium transition-colors
+					{kategorie === chip.value
+					? 'bg-stone-900 text-white'
+					: 'bg-white text-stone-500 ring-1 ring-stone-200 hover:text-stone-800'}"
+			>
+				{chip.label}
+			</button>
+		{/each}
+	</div>
+
 	{#if gefiltert.length === 0}
 		<p class="px-1 text-sm text-stone-400">
-			{suche.trim() ? 'Keine Treffer.' : 'Noch keine Notizen — leg in „Heute“ welche an.'}
+			{suche.trim() || kategorie !== 'alle'
+				? 'Keine Treffer.'
+				: 'Noch keine Notizen — leg in „Heute“ welche an.'}
 		</p>
 	{/if}
 
