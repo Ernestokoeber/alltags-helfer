@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
-	import { saveSleepEntry, recentSleep, sleepDuration, deleteSleepEntry } from '$lib/db/sleep';
+	import {
+		saveSleepEntry,
+		recentSleep,
+		sleepDuration,
+		deleteSleepEntry,
+		averageSleepMinutes
+	} from '$lib/db/sleep';
 	import type { SleepEntry } from '$lib/db/types';
 
 	function heuteISO(): string {
@@ -15,6 +21,9 @@
 		const sub = liveQuery(() => recentSleep()).subscribe((v) => (liste = v));
 		return () => sub.unsubscribe();
 	});
+
+	// Wochenschnitt = Ø Schlafdauer über die geladenen (letzten 7) Nächte.
+	const schnitt = $derived(averageSleepMinutes(liste));
 
 	let datum = $state(heuteISO());
 	let bett = $state('23:00');
@@ -33,9 +42,21 @@
 		notiz = '';
 	}
 
-	function dauerText(bedTime: string, wakeTime: string): string {
-		const m = sleepDuration(bedTime, wakeTime);
+	// Eintrag ins Formular laden; erneutes Speichern ersetzt ihn (Upsert pro Datum).
+	function bearbeiten(e: SleepEntry) {
+		datum = e.date;
+		bett = e.bedTime;
+		auf = e.wakeTime;
+		qual = e.quality;
+		notiz = e.note ?? '';
+	}
+
+	function minutesText(m: number): string {
 		return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+	}
+
+	function dauerText(bedTime: string, wakeTime: string): string {
+		return minutesText(sleepDuration(bedTime, wakeTime));
 	}
 
 	function datumText(iso: string): string {
@@ -107,6 +128,15 @@
 		</div>
 	</div>
 
+	{#if schnitt !== null}
+		<div
+			class="flex items-center justify-between rounded-2xl bg-teal-50 p-4 ring-1 ring-teal-100"
+		>
+			<span class="text-sm font-medium text-teal-800">Wochenschnitt</span>
+			<span class="text-sm font-semibold text-teal-900">Ø {minutesText(schnitt)}</span>
+		</div>
+	{/if}
+
 	<div class="space-y-2">
 		<h3 class="px-1 text-sm font-medium text-stone-700">Letzte Nächte</h3>
 		{#if liste.length === 0}
@@ -124,12 +154,20 @@
 						{e.bedTime}–{e.wakeTime} · {'★'.repeat(e.quality)}{e.note ? ` · ${e.note}` : ''}
 					</p>
 				</div>
-				<button
-					type="button"
-					onclick={() => deleteSleepEntry(e.id)}
-					aria-label="Löschen"
-					class="shrink-0 text-stone-300 hover:text-rose-500">✕</button
-				>
+				<div class="flex shrink-0 gap-1.5 text-stone-300">
+					<button
+						type="button"
+						onclick={() => bearbeiten(e)}
+						aria-label="Bearbeiten"
+						class="hover:text-stone-600">✎</button
+					>
+					<button
+						type="button"
+						onclick={() => deleteSleepEntry(e.id)}
+						aria-label="Löschen"
+						class="hover:text-rose-500">✕</button
+					>
+				</div>
 			</div>
 		{/each}
 	</div>

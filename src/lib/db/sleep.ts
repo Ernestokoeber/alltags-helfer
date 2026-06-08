@@ -48,6 +48,14 @@ export async function sleepForDate(date: string): Promise<SleepEntry | undefined
 	);
 }
 
+// Durchschnittliche Schlafdauer (Minuten, gerundet) über die gegebenen Einträge.
+// Leere Liste → null (kein Durchschnitt darstellbar).
+export function averageSleepMinutes(entries: SleepEntry[]): number | null {
+	if (entries.length === 0) return null;
+	const sum = entries.reduce((acc, e) => acc + sleepDuration(e.bedTime, e.wakeTime), 0);
+	return Math.round(sum / entries.length);
+}
+
 // Letzte N Einträge, nach Datum absteigend.
 export async function recentSleep(limit = 7): Promise<SleepEntry[]> {
 	const arr = await db.sleepEntries.toArray();
