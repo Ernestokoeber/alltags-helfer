@@ -15,13 +15,16 @@ Schlaf-Tracking und ein sanftes Morgen-Briefing.
 
 ## Status
 
-In Umsetzung — alle 5 Tabs funktional, **50 Tests grün**. Changelog/Details in
-**[PROJEKT.md](./PROJEKT.md)** (Abschnitt „Umgesetzt").
+In Umsetzung — alle 5 Tabs funktional, **installierbare PWA** (Service Worker +
+Offline), **56 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+(Abschnitt „Umgesetzt").
 
 **Funktionen:** Heute (Schnellnotiz + Briefing), Notizen (Suche/Kategoriefilter/
 Bearbeiten/Tags/Pin/Kategorie), Termine (+ Vorbereitungs-Tasks), Bucketlist
 (Beschreibung/Zieldatum/Kategorie, Erledigte ausblendbar), Schlaf (Dauer +
 Wochenschnitt + Bearbeiten), lokale Auto-Kategorie für „offen"-Notizen (kein Cloud).
+Installierbar (Manifest + Icons), offline-fähig, `storage.persist()` + Warnung bei
+blockierter IndexedDB.
 
 ## Entwicklung
 

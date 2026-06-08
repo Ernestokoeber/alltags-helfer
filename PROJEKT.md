@@ -17,16 +17,17 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 > Wird bei jedem Feature-Commit mitgepflegt.
 
 - **Fundament:** SvelteKit 2 + Svelte 5 + TypeScript + Tailwind v4, `adapter-static` (SPA), local-first via IndexedDB/Dexie (sync-fähiges Schema, UUID/`updatedAt`/Tombstone).
+- **PWA-Kern (P0 abgeschlossen):** installierbar via Web-App-Manifest + Icons (Platzhalter, `scripts/gen-icons.mjs`), **offline-fähig** über eingebauten Service Worker (`src/service-worker.ts`, Precache + 200.html-Fallback, **kein Plugin** — Vite 8 deckt `@vite-pwa` noch nicht ab). `navigator.storage.persist()` gegen iOS-Verdrängung + DB-Health-Check mit Banner (blockierte IndexedDB, z. B. privater Modus).
 - **Heute:** Schnellnotiz mit Kategorie; Briefing (letzte Schlafnacht + nächste Termine).
 - **Notizen:** Liste, Suche (Inhalt + Tags), **Kategoriefilter** (Alle/Privat/Geschäftlich/Offen, reine Helper-Funktion `src/lib/notes-filter.ts`), Inline-Bearbeiten, Tags, Pin, Kategorie wechseln, Soft-Delete.
 - **Termine:** anlegen / Liste anstehender / löschen + **Vorbereitungs-Tasks** (Checkliste je Termin).
 - **Bucketlist:** anlegen mit **Beschreibung, Zieldatum und Kategorie** (Chips), erledigt umschalten, **Erledigte ein-/ausblenden**, löschen.
 - **Schlaf:** Eintrag (Datum/Zeiten/Qualität/Notiz), **Dauer-Berechnung** (auch über Mitternacht), letzte Nächte, **Wochenschnitt** (Ø der letzten 7 Nächte) und **Bearbeiten** (Eintrag ins Formular laden, Upsert ersetzt ihn).
 - **Auto-Kategorie:** lokaler Stichwort-Klassifizierer (`src/lib/classify.ts`, **kein Cloud**) schlägt für „offen"-Notizen Privat/Geschäftlich vor, Übernahme per Klick. *Gemini bewusst verworfen (Datenschutz).*
-- **Qualität:** **50 Tests grün** — Datenschicht (vitest + fake-indexeddb) und UI-Komponenten (`@testing-library/svelte` + happy-dom).
+- **Qualität:** **56 Tests grün** — Datenschicht (vitest + fake-indexeddb) und UI-Komponenten (`@testing-library/svelte` + happy-dom).
 - **Dev/Git:** Multipass-VM `alltagshelfer-dev`, `scripts/vm-dev.sh`; Arbeit direkt auf `main`.
 
-**Noch offen:** „Heute"-Tipp (Entschleunigen); `@vite-pwa` (installierbar/offline), HTTPS für iPhone-Test (mkcert/Tunnel), Erinnerungen/Push + Geräte-Sync (P6).
+**Noch offen:** echter iPhone-Test über HTTPS (Cloudflare Tunnel) — On-Device-Verifikation des Service Workers/Offline; „Heute"-Tipp (Entschleunigen); Erinnerungen (lokale Notifications); Spracheingabe (Diktat); optional automatischer E2E-Smoke (Playwright); Push + Geräte-Sync (P6).
 
 ---
 
