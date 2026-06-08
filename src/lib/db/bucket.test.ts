@@ -11,7 +11,22 @@ describe('Bucketlist', () => {
 		const b = await addBucketItem({ title: 'Fallschirmsprung' });
 		expect(b.done).toBe(false);
 		expect(b.title).toBe('Fallschirmsprung');
+		expect(b.category).toBe('offen');
 		expect(b.deletedAt).toBeNull();
+	});
+
+	it('addBucketItem: speichert Beschreibung, Zieldatum und Kategorie', async () => {
+		const ziel = new Date(2026, 7, 15).getTime();
+		const b = await addBucketItem({
+			title: 'Island bereisen',
+			description: 'Ringstraße mit dem Camper',
+			targetDate: ziel,
+			category: 'privat'
+		});
+		const gespeichert = await db.bucketItems.get(b.id);
+		expect(gespeichert?.description).toBe('Ringstraße mit dem Camper');
+		expect(gespeichert?.targetDate).toBe(ziel);
+		expect(gespeichert?.category).toBe('privat');
 	});
 
 	it('toggleBucketDone setzt den Status', async () => {
