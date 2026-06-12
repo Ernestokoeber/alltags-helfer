@@ -1,5 +1,5 @@
 // Generiert die PWA-Platzhalter-Icons dependency-frei (nur Node-Builtins).
-// Motiv: Teal-Kachel mit einer Sonne (passt zu ☀️ / "Heute").
+// Motiv: zwei überlappende Sphären (Amber = Privat, Himmelblau = Arbeit) auf dunkler Kachel.
 // Erneut ausführen: `node scripts/gen-icons.mjs` — überschreibt static/icons/*.
 import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -50,19 +50,13 @@ function encodePng(size, rgba) {
 }
 
 // --- Zeichnen -----------------------------------------------------------------
-const BG = [15, 118, 110]; // teal-700 #0f766e
-const SUN = [251, 191, 36]; // amber-400 #fbbf24
+// Motiv „Zwei Sphären": Amber (Privat) und Himmelblau (Arbeit) überlappen sich
+// auf dunklem Grund — die Schnittmenge leuchtet hell (verknüpfte Lebensbereiche).
+const BG = [9, 9, 11]; // zinc-950 #09090b
+const PRIVAT = [251, 191, 36]; // amber-400 #fbbf24
+const ARBEIT = [56, 189, 248]; // sky-400 #38bdf8
+const SCHNITT = [244, 244, 245]; // zinc-100 #f4f4f5
 
-function distSeg(px, py, ax, ay, bx, by) {
-	const dx = bx - ax;
-	const dy = by - ay;
-	const l2 = dx * dx + dy * dy;
-	let t = l2 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0;
-	t = Math.max(0, Math.min(1, t));
-	return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
-}
-
-// Farbe an Fließkomma-Koordinate; alpha 0 = transparent (außerhalb der Kachel).
 function colorAt(fx, fy, size, rounded) {
 	const c = size / 2;
 	if (rounded) {
@@ -71,22 +65,13 @@ function colorAt(fx, fy, size, rounded) {
 		const dy = Math.max(Math.abs(fy - c) - (c - r), 0);
 		if (Math.hypot(dx, dy) > r) return null; // außerhalb der abgerundeten Kachel
 	}
-	const dCenter = Math.hypot(fx - c, fy - c);
-	let sun = dCenter <= 0.16 * size;
-	if (!sun) {
-		for (let i = 0; i < 8; i++) {
-			const a = (i * Math.PI) / 4;
-			const ax = c + Math.cos(a) * 0.22 * size;
-			const ay = c + Math.sin(a) * 0.22 * size;
-			const bx = c + Math.cos(a) * 0.34 * size;
-			const by = c + Math.sin(a) * 0.34 * size;
-			if (distSeg(fx, fy, ax, ay, bx, by) <= 0.035 * size) {
-				sun = true;
-				break;
-			}
-		}
-	}
-	return sun ? SUN : BG;
+	const r = 0.21 * size;
+	const inPrivat = Math.hypot(fx - 0.41 * size, fy - 0.43 * size) <= r;
+	const inArbeit = Math.hypot(fx - 0.59 * size, fy - 0.57 * size) <= r;
+	if (inPrivat && inArbeit) return SCHNITT;
+	if (inPrivat) return PRIVAT;
+	if (inArbeit) return ARBEIT;
+	return BG;
 }
 
 // 2x2-Supersampling für glatte Kanten (korrekt über Deckung gemittelt).

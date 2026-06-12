@@ -2,14 +2,17 @@
 	import { liveQuery } from 'dexie';
 	import { addBucketItem, allBucketItems, toggleBucketDone, deleteBucketItem } from '$lib/db/bucket';
 	import type { BucketItem, Category } from '$lib/db/types';
+	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
+	import { sphaere } from '$lib/sphere-state.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
-	let liste = $state<BucketItem[]>([]);
+	let alle = $state<BucketItem[]>([]);
 	$effect(() => {
-		const sub = liveQuery(() => allBucketItems()).subscribe((v) => (liste = v));
+		const sub = liveQuery(() => allBucketItems()).subscribe((v) => (alle = v));
 		return () => sub.unsubscribe();
 	});
-
-	// Erledigte ein-/ausblenden (Standard: anzeigen, ans Ende sortiert).
+	// Erst die globale Sphäre, dann Erledigte ein-/ausblenden.
+	const liste = $derived(filterBySphere(alle, sphaere.current));
 	let zeigeErledigte = $state(true);
 	const sichtbar = $derived(zeigeErledigte ? liste : liste.filter((b) => !b.done));
 	const erledigteAnzahl = $derived(liste.filter((b) => b.done).length);
@@ -49,47 +52,32 @@
 			year: 'numeric'
 		});
 	}
-
-	const catLabel: Record<Category, string> = {
-		privat: 'Privat',
-		geschaeftlich: 'Geschäftlich',
-		offen: 'Offen'
-	};
-	const catStyle: Record<Category, string> = {
-		privat: 'bg-teal-100 text-teal-700',
-		geschaeftlich: 'bg-indigo-100 text-indigo-700',
-		offen: 'bg-stone-100 text-stone-500'
-	};
 </script>
 
 <section class="space-y-4">
-	<h2 class="text-2xl font-semibold">Bucketlist</h2>
+	<h2 class="text-2xl font-bold tracking-tight">Bucketlist</h2>
 
-	<div class="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100">
+	<div class="card space-y-2.5 p-4">
 		<input
 			bind:value={titel}
 			placeholder="Was möchtest du erleben?"
 			onkeydown={(e) => {
 				if (e.key === 'Enter') anlegen();
 			}}
-			class="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+			class="field"
 		/>
 		<textarea
 			bind:value={beschreibung}
 			rows="2"
 			placeholder="Beschreibung (optional)"
-			class="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+			class="field resize-none"
 		></textarea>
 		<div class="flex flex-wrap items-end gap-3">
-			<label class="flex flex-col gap-1 text-xs text-stone-500">
+			<label class="flex flex-col gap-1 text-xs text-zinc-400">
 				Zieldatum (optional)
-				<input
-					bind:value={zieldatum}
-					type="date"
-					class="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-				/>
+				<input bind:value={zieldatum} type="date" class="field" />
 			</label>
-			<div class="flex flex-col gap-1 text-xs text-stone-500">
+			<div class="flex flex-col gap-1 text-xs text-zinc-400">
 				<span>Kategorie</span>
 				<div class="flex gap-1.5" role="group" aria-label="Kategorie wählen">
 					{#each ['offen', 'privat', 'geschaeftlich'] as const as c (c)}
@@ -97,24 +85,16 @@
 							type="button"
 							onclick={() => (kategorie = c)}
 							aria-pressed={kategorie === c}
-							class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors
-								{kategorie === c
-								? 'bg-stone-900 text-white'
-								: 'bg-white text-stone-500 ring-1 ring-stone-200 hover:text-stone-800'}"
+							class="chip py-1.5 {kategorie === c ? categoryChipActive[c] : 'chip-idle'}"
 						>
-							{catLabel[c]}
+							{categoryLabel[c]}
 						</button>
 					{/each}
 				</div>
 			</div>
 		</div>
 		<div class="flex justify-end">
-			<button
-				type="button"
-				onclick={anlegen}
-				disabled={!titel.trim()}
-				class="rounded-full bg-stone-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-30"
-			>
+			<button type="button" onclick={anlegen} disabled={!titel.trim()} class="btn-primary">
 				Hinzufügen
 			</button>
 		</div>
@@ -126,7 +106,7 @@
 				type="button"
 				onclick={() => (zeigeErledigte = !zeigeErledigte)}
 				aria-pressed={!zeigeErledigte}
-				class="text-xs font-medium text-stone-500 hover:text-stone-800"
+				class="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100"
 			>
 				{zeigeErledigte ? `Erledigte ausblenden (${erledigteAnzahl})` : 'Erledigte anzeigen'}
 			</button>
@@ -135,31 +115,35 @@
 
 	<div class="space-y-2">
 		{#if sichtbar.length === 0}
-			<p class="px-1 text-sm text-stone-400">Noch nichts auf deiner Liste.</p>
+			<p class="px-1 text-sm text-zinc-500">Noch nichts auf deiner Liste.</p>
 		{/if}
 		{#each sichtbar as b (b.id)}
-			<div class="flex items-start gap-3 rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-100">
+			<div class="card flex items-start gap-3 p-3.5 {b.done ? 'opacity-60' : ''}">
 				<button
 					type="button"
 					onclick={() => toggleBucketDone(b.id, !b.done)}
 					aria-label="Erledigt umschalten"
-					class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border text-xs {b.done
-						? 'border-teal-500 bg-teal-500 text-white'
-						: 'border-stone-300 text-transparent'}"
+					class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors {b.done
+						? 'border-teal-400 bg-teal-400 text-zinc-950'
+						: 'border-zinc-600 text-transparent hover:border-zinc-400'}"
 				>
-					✓
+					<Icon name="check" class="h-3 w-3" />
 				</button>
 				<div class="min-w-0 flex-1">
-					<p class="text-sm {b.done ? 'text-stone-400 line-through' : 'text-stone-800'}">
+					<p class="text-sm {b.done ? 'text-zinc-500 line-through' : 'text-zinc-100'}">
 						{b.title}
 					</p>
 					{#if b.description}
-						<p class="mt-0.5 whitespace-pre-wrap text-xs text-stone-500">{b.description}</p>
+						<p class="mt-0.5 text-xs whitespace-pre-wrap text-zinc-400">{b.description}</p>
 					{/if}
-					<div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
-						<span class="rounded-full px-2 py-0.5 {catStyle[b.category]}">{catLabel[b.category]}</span>
+					<div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+						<span class="chip px-2 py-0.5 {categoryBadge[b.category]}"
+							>{categoryLabel[b.category]}</span
+						>
 						{#if b.targetDate}
-							<span class="text-stone-400">🎯 bis {fmtDatum(b.targetDate)}</span>
+							<span class="flex items-center gap-1 text-zinc-500">
+								<Icon name="flag" class="h-3.5 w-3.5" /> bis {fmtDatum(b.targetDate)}
+							</span>
 						{/if}
 					</div>
 				</div>
@@ -167,8 +151,10 @@
 					type="button"
 					onclick={() => deleteBucketItem(b.id)}
 					aria-label="Löschen"
-					class="shrink-0 text-stone-300 hover:text-rose-500">✕</button
+					class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
 				>
+					<Icon name="x" class="h-4 w-4" />
+				</button>
 			</div>
 		{/each}
 	</div>

@@ -15,7 +15,8 @@ describe('KategorieVorschlag (UI)', () => {
 	it('zeigt einen Vorschlag für eine offene, geschäftlich klingende Notiz', async () => {
 		const note = await addNote({ content: 'Meeting mit dem Kunden vorbereiten', category: 'offen' });
 		render(KategorieVorschlag, { props: { note } });
-		expect(screen.getByText(/Geschäftlich/)).toBeInTheDocument();
+		// 'geschaeftlich' wird in der UI als „Arbeit" angezeigt.
+		expect(screen.getByText(/Arbeit/)).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: 'Übernehmen' })).toBeInTheDocument();
 	});
 

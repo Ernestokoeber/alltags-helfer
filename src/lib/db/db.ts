@@ -7,7 +7,8 @@ import type {
 	Reminder,
 	BucketItem,
 	SleepEntry,
-	TimeEntry
+	TimeEntry,
+	Project
 } from './types';
 
 // Local-first Datenbank (IndexedDB via Dexie). Das Schema ist sync-fähig:
@@ -22,6 +23,7 @@ export class AppDB extends Dexie {
 	bucketItems!: Table<BucketItem, string>;
 	sleepEntries!: Table<SleepEntry, string>;
 	timeEntries!: Table<TimeEntry, string>;
+	projects!: Table<Project, string>;
 
 	constructor() {
 		super('alltags-helfer');
@@ -34,6 +36,26 @@ export class AppDB extends Dexie {
 			bucketItems: '&id, done, category, targetDate, updatedAt, deletedAt',
 			sleepEntries: '&id, date, updatedAt, deletedAt',
 			timeEntries: '&id, sourceApp, startedAt, updatedAt, deletedAt'
+		});
+		// v2: Termine bekommen eine Kategorie (Privat/Arbeit/Offen), damit die
+		// Sphären-Sicht auch Termine filtern kann. Bestand wird auf 'offen' gesetzt.
+		this.version(2)
+			.stores({
+				appointments: '&id, startAt, category, updatedAt, deletedAt'
+			})
+			.upgrade((tx) =>
+				tx
+					.table('appointments')
+					.toCollection()
+					.modify((a) => {
+						a.category ??= 'offen';
+					})
+			);
+		// v3: Projekte (bündeln Notizen, v. a. für die Arbeit) + Notizen können
+		// per projectId einem Projekt zugeordnet werden.
+		this.version(3).stores({
+			projects: '&id, name, category, archived, updatedAt, deletedAt',
+			notes: '&id, category, pinned, projectId, createdAt, updatedAt, deletedAt, *tags'
 		});
 	}
 }

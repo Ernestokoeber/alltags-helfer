@@ -7,9 +7,15 @@ const config = {
 		runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 	},
 	kit: {
-		// SPA-Modus: alle Routen landen in 200.html, Client-seitiges Routing.
-		// Passt zur local-first PWA (kein Server-Rendering, Daten leben im Browser).
-		adapter: adapter({ fallback: '200.html' })
+		// SPA-Modus: alle Routen landen in der Fallback-Shell, Client-seitiges Routing.
+		// 404.html statt 200.html, weil GitHub Pages unbekannte Pfade darüber ausliefert —
+		// so funktionieren Deep-Links auch dort. Passt zur local-first PWA (kein SSR).
+		adapter: adapter({ fallback: '404.html' }),
+		paths: {
+			// GitHub Pages serviert unter /<repo-name>/ — der Workflow setzt BASE_PATH.
+			// Lokal (dev/preview/Tests) bleibt die Basis leer.
+			base: process.env.BASE_PATH || ''
+		}
 	}
 };
 

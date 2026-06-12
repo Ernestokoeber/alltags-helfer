@@ -17,7 +17,17 @@ describe('Termine', () => {
 		expect(t.title).toBe('Zahnarzt');
 		expect(t.location).toBe('Praxis');
 		expect(t.deletedAt).toBeNull();
+		expect(t.category).toBe('offen'); // ohne Angabe: unsortiert → in jeder Sphäre sichtbar
 		expect(await db.appointments.get(t.id)).toBeDefined();
+	});
+
+	it('addAppointment übernimmt die Kategorie (Privat/Arbeit)', async () => {
+		const t = await addAppointment({
+			title: 'Sprint-Review',
+			startAt: Date.now() + 86_400_000,
+			category: 'geschaeftlich'
+		});
+		expect((await db.appointments.get(t.id))?.category).toBe('geschaeftlich');
 	});
 
 	it('upcomingAppointments: nur zukünftige, aufsteigend, ohne gelöschte', async () => {

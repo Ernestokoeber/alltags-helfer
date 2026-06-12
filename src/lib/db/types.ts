@@ -18,8 +18,17 @@ export interface Note extends SyncMeta {
 	pinned: boolean;
 	importance: number; // 0 = normal, höher = wichtiger
 	tags: string[]; // Tag-Namen (in P0 bewusst einfach inline gehalten)
+	projectId?: string; // optional einem Projekt zugeordnet (seit v3)
 	audioPath?: string;
 	transcript?: string;
+}
+
+// Laufendes Projekt (v. a. Arbeit, aber auch privat möglich) — bündelt Notizen.
+export interface Project extends SyncMeta {
+	name: string;
+	description?: string;
+	category: Category;
+	archived: boolean; // abgeschlossen/pausiert, bleibt mit Notizen erhalten
 }
 
 export interface Tag extends SyncMeta {
@@ -29,6 +38,7 @@ export interface Tag extends SyncMeta {
 export interface Appointment extends SyncMeta {
 	title: string;
 	startAt: number;
+	category: Category; // Privat/Arbeit/Offen — seit v2, Bestand wird auf 'offen' migriert
 	location?: string;
 	description?: string;
 	reminderLead?: number; // Minuten vor startAt

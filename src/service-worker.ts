@@ -5,8 +5,8 @@
 
 // Eingebauter SvelteKit-Service-Worker (kein Plugin nötig). Macht die App
 // offline-fähig: gebaute Assets werden beim Install vorgecacht, Navigationen
-// fallen offline auf die SPA-Shell (200.html) zurück.
-import { build, files, version } from '$service-worker';
+// fallen offline auf die SPA-Shell (404.html, siehe svelte.config.js) zurück.
+import { base, build, files, prerendered, version } from '$service-worker';
 
 // `self` ist im Worker-Kontext der ServiceWorkerGlobalScope.
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -14,12 +14,14 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 // Pro Version ein eigener Cache → alte Versionen werden beim Activate entfernt.
 const CACHE = `alltags-helfer-${version}`;
 
-// Gebaute App-Dateien (immutable, versioniert) + statische Assets.
-const PRECACHE = [...build, ...files];
+// Gebaute App-Dateien (immutable, versioniert) + statische Assets
+// + prerenderte Routen-Shells (damit Deep-Links auch offline laden).
+const PRECACHE = [...build, ...files, ...prerendered];
 const PRECACHE_SET = new Set(PRECACHE);
 
-// Pfad der SPA-Fallback-Shell (von adapter-static erzeugt).
-const FALLBACK = '/200.html';
+// Pfad der SPA-Fallback-Shell (von adapter-static erzeugt), inkl. Basis-Pfad
+// (auf GitHub Pages läuft die App unter /<repo-name>/).
+const FALLBACK = `${base}/404.html`;
 
 sw.addEventListener('install', (event) => {
 	async function precache() {
@@ -29,7 +31,7 @@ sw.addEventListener('install', (event) => {
 		try {
 			await cache.add(FALLBACK);
 		} catch {
-			// In manchen Umgebungen (z. B. reiner Dev-Server) existiert 200.html nicht.
+			// In manchen Umgebungen (z. B. reiner Dev-Server) existiert 404.html nicht.
 		}
 	}
 	event.waitUntil(precache().then(() => sw.skipWaiting()));
@@ -72,7 +74,7 @@ sw.addEventListener('fetch', (event) => {
 			if (cached) return cached;
 			// Navigation offline → SPA-Shell ausliefern (Client-Routing übernimmt).
 			if (event.request.mode === 'navigate') {
-				const shell = (await cache.match(FALLBACK)) ?? (await cache.match('/'));
+				const shell = (await cache.match(FALLBACK)) ?? (await cache.match(`${base}/`));
 				if (shell) return shell;
 			}
 			return new Response('Offline und nicht im Cache.', {

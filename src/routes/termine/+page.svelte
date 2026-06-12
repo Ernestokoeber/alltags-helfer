@@ -2,23 +2,34 @@
 	import { liveQuery } from 'dexie';
 	import { addAppointment, upcomingAppointments, deleteAppointment } from '$lib/db/appointments';
 	import Vorbereitung from '$lib/components/Vorbereitung.svelte';
-	import type { Appointment } from '$lib/db/types';
+	import Icon from '$lib/components/Icon.svelte';
+	import type { Appointment, Category } from '$lib/db/types';
+	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
+	import { sphaere } from '$lib/sphere-state.svelte';
 
-	let liste = $state<Appointment[]>([]);
+	let alle = $state<Appointment[]>([]);
 	$effect(() => {
-		const sub = liveQuery(() => upcomingAppointments()).subscribe((v) => (liste = v));
+		const sub = liveQuery(() => upcomingAppointments()).subscribe((v) => (alle = v));
 		return () => sub.unsubscribe();
 	});
+	// Termine folgen der globalen Sphäre (Privat/Arbeit/Alles).
+	const liste = $derived(filterBySphere(alle, sphaere.current));
 
 	let titel = $state('');
 	let wann = $state('');
 	let ort = $state('');
+	// Kategorie-Vorgabe folgt der aktiven Sphäre.
+	let kategorie = $state<Category>(sphaere.current === 'alles' ? 'offen' : sphaere.current);
+	$effect(() => {
+		kategorie = sphaere.current === 'alles' ? 'offen' : sphaere.current;
+	});
+	const kategorien: Category[] = ['privat', 'geschaeftlich', 'offen'];
 
 	async function anlegen() {
 		const t = titel.trim();
 		const ms = wann ? new Date(wann).getTime() : NaN;
 		if (!t || Number.isNaN(ms)) return;
-		await addAppointment({ title: t, startAt: ms, location: ort });
+		await addAppointment({ title: t, startAt: ms, location: ort, category: kategorie });
 		titel = '';
 		wann = '';
 		ort = '';
@@ -36,56 +47,68 @@
 </script>
 
 <section class="space-y-4">
-	<h2 class="text-2xl font-semibold">Termine</h2>
+	<h2 class="text-2xl font-bold tracking-tight">Termine</h2>
 
-	<div class="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100">
-		<input
-			bind:value={titel}
-			placeholder="Titel"
-			class="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-		/>
-		<input
-			bind:value={wann}
-			type="datetime-local"
-			class="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-		/>
-		<input
-			bind:value={ort}
-			placeholder="Ort (optional)"
-			class="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-		/>
-		<div class="flex justify-end">
+	<div class="card space-y-2.5 p-4">
+		<input bind:value={titel} placeholder="Titel" class="field" />
+		<input bind:value={wann} type="datetime-local" class="field" />
+		<input bind:value={ort} placeholder="Ort (optional)" class="field" />
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex gap-1" role="group" aria-label="Termin-Kategorie wählen">
+				{#each kategorien as k (k)}
+					<button
+						type="button"
+						onclick={() => (kategorie = k)}
+						aria-pressed={kategorie === k}
+						class="chip px-2.5 {kategorie === k ? categoryChipActive[k] : 'chip-idle'}"
+					>
+						{categoryLabel[k]}
+					</button>
+				{/each}
+			</div>
 			<button
 				type="button"
 				onclick={anlegen}
 				disabled={!titel.trim() || !wann}
-				class="rounded-full bg-stone-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-30"
+				class="btn-primary"
 			>
-				Termin anlegen
+				Anlegen
 			</button>
 		</div>
 	</div>
 
 	<div class="space-y-2">
-		<h3 class="px-1 text-sm font-medium text-stone-700">Anstehend</h3>
+		<h3 class="px-1 text-sm font-medium text-zinc-300">Anstehend</h3>
 		{#if liste.length === 0}
-			<p class="px-1 text-sm text-stone-400">Keine anstehenden Termine.</p>
+			<p class="px-1 text-sm text-zinc-500">Keine anstehenden Termine in dieser Sicht.</p>
 		{/if}
 		{#each liste as t (t.id)}
-			<div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-100">
+			<div class="card p-3.5">
 				<div class="flex items-start justify-between gap-3">
-					<div>
-						<p class="text-sm font-medium text-stone-800">{t.title}</p>
-						<p class="mt-0.5 text-xs text-stone-400">
-							{fmt(t.startAt)}{t.location ? ` · ${t.location}` : ''}
+					<div class="min-w-0">
+						<div class="flex items-center gap-2">
+							<p class="truncate text-sm font-medium text-zinc-100">{t.title}</p>
+							<span class="chip shrink-0 px-2 py-0.5 {categoryBadge[t.category]}"
+								>{categoryLabel[t.category]}</span
+							>
+						</div>
+						<p class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+							<Icon name="clock" class="h-3.5 w-3.5" />
+							{fmt(t.startAt)}
+							{#if t.location}
+								<Icon name="mapPin" class="ml-1 h-3.5 w-3.5" />
+								{t.location}
+							{/if}
 						</p>
 					</div>
 					<button
 						type="button"
 						onclick={() => deleteAppointment(t.id)}
 						aria-label="Löschen"
-						class="shrink-0 text-stone-300 hover:text-rose-500">✕</button
+						class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
 					>
+						<Icon name="x" class="h-4 w-4" />
+					</button>
 				</div>
 				<Vorbereitung appointmentId={t.id} />
 			</div>

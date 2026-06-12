@@ -1,13 +1,22 @@
 # Alltags-Helfer
 
-Ein **local-first Second-Brain & Daily-Planner** als PWA (iPhone + Android + Desktop):
-Notizen (Text + Sprache), Termine mit Vorbereitung & Erinnerung, Bucketlist,
-Schlaf-Tracking und ein sanftes Morgen-Briefing.
+**Privat & Arbeit, ein Ort.** Ein local-first Second-Brain & Daily-Planner als PWA
+(iPhone + Android + Desktop): Notizen, Termine mit Vorbereitung, Bucketlist,
+Schlaf-Tracking und ein Morgen-Briefing — verbunden durch die **Sphären-Sicht**:
+Ein Umschalter im Header (Privat / Alles / Arbeit) filtert die gesamte App, sodass
+beide Lebensbereiche in einer App leben, ohne sich zu vermischen.
 
 > Den vollständigen Plan, die Architektur und die Roadmap findest du in
 > **[PROJEKT.md](./PROJEKT.md)**.
 
-## Stack (geplant)
+## Design
+
+Dunkles Premium-Theme („Zwei Sphären"): Privat = Amber, Arbeit = Himmelblau —
+die beiden Farbwelten rahmen die App und verschmelzen im App-Icon. Glas-Karten
+(`backdrop-blur`), schwebende Navigationsleiste, Outfit-Schrift (selbst gehostet,
+offline-fähig), Inline-SVG-Icons statt Emojis.
+
+## Stack
 
 - **Client:** SvelteKit als PWA, lokale Daten via IndexedDB (Dexie)
 - **Spracheingabe:** OS-Diktat (on-device)
@@ -15,16 +24,32 @@ Schlaf-Tracking und ein sanftes Morgen-Briefing.
 
 ## Status
 
-In Umsetzung — alle 5 Tabs funktional, **installierbare PWA** (Service Worker +
-Offline), **56 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+In Umsetzung — alle 6 Tabs funktional, **installierbare PWA** (Service Worker +
+Offline), **77 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
 (Abschnitt „Umgesetzt").
 
-**Funktionen:** Heute (Schnellnotiz + Briefing), Notizen (Suche/Kategoriefilter/
-Bearbeiten/Tags/Pin/Kategorie), Termine (+ Vorbereitungs-Tasks), Bucketlist
-(Beschreibung/Zieldatum/Kategorie, Erledigte ausblendbar), Schlaf (Dauer +
-Wochenschnitt + Bearbeiten), lokale Auto-Kategorie für „offen"-Notizen (kein Cloud).
-Installierbar (Manifest + Icons), offline-fähig, `storage.persist()` + Warnung bei
-blockierter IndexedDB.
+**Funktionen:** globale Sphären-Sicht Privat/Arbeit/Alles (in localStorage gemerkt),
+Heute (Schnellnotiz + Briefing + „Brücke" mit dem nächsten Termin je Sphäre),
+Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie), **Projekte**
+(laufende Vorhaben bündeln Notizen, Detailansicht mit Projekt-Notiz, archivierbar),
+Termine (mit Kategorie + Vorbereitungs-Tasks), Bucketlist (Beschreibung/Zieldatum/
+Kategorie, Erledigte ausblendbar), Schlaf (Dauer + Wochenschnitt + Bearbeiten),
+lokale Auto-Kategorie für „offen"-Notizen (kein Cloud), **Datensicherung**
+(JSON-Export/-Import mit Last-Write-Wins-Merge, unter Einstellungen). Installierbar
+(Manifest + Icons), offline-fähig, `storage.persist()` + Warnung bei blockierter
+IndexedDB.
+
+## Deployment (GitHub Pages)
+
+Jeder Push auf `main` baut und veröffentlicht die PWA automatisch über
+`.github/workflows/deploy.yml` nach **GitHub Pages**:
+`https://ernestokoeber.github.io/alltags-helfer/` — von dort lässt sie sich am
+Handy „Zum Home-Bildschirm hinzufügen" (installierbare PWA, offline-fähig).
+
+Technik: Der Workflow setzt `BASE_PATH=/alltags-helfer` (→ `paths.base` in
+`svelte.config.js`), die Routen werden als Client-Shells prerendert und
+`404.html` dient als SPA-Fallback für unbekannte Pfade. Hinweis: Auf dem
+GitHub-Free-Plan funktioniert Pages nur bei **öffentlichen** Repos.
 
 ## Entwicklung
 
