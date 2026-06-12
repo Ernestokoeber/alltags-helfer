@@ -1,14 +1,11 @@
 # Baut die PWA und veröffentlicht sie auf GitHub Pages
-# (https://<owner>.github.io/<repo>/). Läuft bei jedem Push auf main;
-# der Feature-Branch ist vorübergehend mit drin, damit das Redesign
-# schon vor dem Merge auf dem Handy testbar ist.
+# (https://<owner>.github.io/<repo>/). Läuft bei jedem Push auf main.
 name: Deploy GitHub Pages
 
 on:
   push:
     branches:
       - main
-      - claude/repo-redesign-work-personal-536m1o
   workflow_dispatch:
 
 permissions:
