@@ -78,11 +78,11 @@
 			<input bind:value={datum} type="date" class="field mt-1" />
 		</label>
 		<div class="flex gap-2">
-			<label class="flex-1 text-xs text-zinc-400">
+			<label class="min-w-0 flex-1 text-xs text-zinc-400">
 				Zu Bett
 				<input bind:value={bett} type="time" class="field mt-1" />
 			</label>
-			<label class="flex-1 text-xs text-zinc-400">
+			<label class="min-w-0 flex-1 text-xs text-zinc-400">
 				Aufgewacht
 				<input bind:value={auf} type="time" class="field mt-1" />
 			</label>
