@@ -35,6 +35,20 @@ export class AppDB extends Dexie {
 			sleepEntries: '&id, date, updatedAt, deletedAt',
 			timeEntries: '&id, sourceApp, startedAt, updatedAt, deletedAt'
 		});
+		// v2: Termine bekommen eine Kategorie (Privat/Arbeit/Offen), damit die
+		// Sphären-Sicht auch Termine filtern kann. Bestand wird auf 'offen' gesetzt.
+		this.version(2)
+			.stores({
+				appointments: '&id, startAt, category, updatedAt, deletedAt'
+			})
+			.upgrade((tx) =>
+				tx
+					.table('appointments')
+					.toCollection()
+					.modify((a) => {
+						a.category ??= 'offen';
+					})
+			);
 	}
 }
 

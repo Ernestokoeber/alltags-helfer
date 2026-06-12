@@ -29,6 +29,7 @@ export interface Tag extends SyncMeta {
 export interface Appointment extends SyncMeta {
 	title: string;
 	startAt: number;
+	category: Category; // Privat/Arbeit/Offen — seit v2, Bestand wird auf 'offen' migriert
 	location?: string;
 	description?: string;
 	reminderLead?: number; // Minuten vor startAt

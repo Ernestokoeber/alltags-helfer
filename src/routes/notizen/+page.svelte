@@ -11,7 +11,10 @@
 	} from '$lib/db/notes';
 	import type { Category, Note } from '$lib/db/types';
 	import { filterNotes, type CategoryFilter } from '$lib/notes-filter';
+	import { categoryLabel, categoryBadge, filterBySphere } from '$lib/sphere';
+	import { sphaere } from '$lib/sphere-state.svelte';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
 	let alle = $state<Note[]>([]);
@@ -20,16 +23,17 @@
 		return () => sub.unsubscribe();
 	});
 
-	// Suche + Kategorie-Filter, clientseitig über die reine Helper-Funktion.
+	// Erst die globale Sphäre, dann Suche + Kategorie-Chips als Feinfilter.
 	let suche = $state('');
 	let kategorie = $state<CategoryFilter>('alle');
-	const gefiltert = $derived(filterNotes(alle, suche, kategorie));
+	const inSphaere = $derived(filterBySphere(alle, sphaere.current));
+	const gefiltert = $derived(filterNotes(inSphaere, suche, kategorie));
 
 	// Filter-Chips: Reihenfolge + Beschriftung.
 	const filterChips: { value: CategoryFilter; label: string }[] = [
 		{ value: 'alle', label: 'Alle' },
 		{ value: 'privat', label: 'Privat' },
-		{ value: 'geschaeftlich', label: 'Geschäftlich' },
+		{ value: 'geschaeftlich', label: 'Arbeit' },
 		{ value: 'offen', label: 'Offen' }
 	];
 
@@ -60,16 +64,6 @@
 		geschaeftlich: 'offen',
 		offen: 'privat'
 	};
-	const catLabel: Record<Category, string> = {
-		privat: 'Privat',
-		geschaeftlich: 'Geschäftlich',
-		offen: 'Offen'
-	};
-	const catStyle: Record<Category, string> = {
-		privat: 'bg-teal-100 text-teal-700',
-		geschaeftlich: 'bg-indigo-100 text-indigo-700',
-		offen: 'bg-stone-100 text-stone-500'
-	};
 
 	function datumZeit(ms: number): string {
 		return new Date(ms).toLocaleString('de-DE', {
@@ -82,15 +76,17 @@
 </script>
 
 <section class="space-y-4">
-	<h2 class="text-2xl font-semibold">Notizen</h2>
+	<h2 class="text-2xl font-bold tracking-tight">Notizen</h2>
 
-	<input
-		bind:value={suche}
-		type="search"
-		placeholder="Suchen (Inhalt oder Tag) …"
-		class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none
-			focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-	/>
+	<div class="relative">
+		<Icon name="search" class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-zinc-500" />
+		<input
+			bind:value={suche}
+			type="search"
+			placeholder="Suchen (Inhalt oder Tag) …"
+			class="field pl-9"
+		/>
+	</div>
 
 	<div class="flex flex-wrap gap-1.5" role="group" aria-label="Notizen nach Kategorie filtern">
 		{#each filterChips as chip (chip.value)}
@@ -98,10 +94,7 @@
 				type="button"
 				onclick={() => (kategorie = chip.value)}
 				aria-pressed={kategorie === chip.value}
-				class="rounded-full px-3 py-1 text-xs font-medium transition-colors
-					{kategorie === chip.value
-					? 'bg-stone-900 text-white'
-					: 'bg-white text-stone-500 ring-1 ring-stone-200 hover:text-stone-800'}"
+				class="chip {kategorie === chip.value ? 'bg-zinc-100 text-zinc-900' : 'chip-idle'}"
 			>
 				{chip.label}
 			</button>
@@ -109,73 +102,72 @@
 	</div>
 
 	{#if gefiltert.length === 0}
-		<p class="px-1 text-sm text-stone-400">
-			{suche.trim() || kategorie !== 'alle'
-				? 'Keine Treffer.'
+		<p class="px-1 text-sm text-zinc-500">
+			{suche.trim() || kategorie !== 'alle' || sphaere.current !== 'alles'
+				? 'Keine Treffer in dieser Sicht.'
 				: 'Noch keine Notizen — leg in „Heute“ welche an.'}
 		</p>
 	{/if}
 
 	<div class="space-y-2">
 		{#each gefiltert as n (n.id)}
-			<div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-100">
+			<div class="card p-3.5 {n.pinned ? 'border-amber-400/30' : ''}">
 				{#if editId === n.id}
-					<textarea
-						bind:value={editText}
-						rows="2"
-						class="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-sm
-							outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
-					></textarea>
+					<textarea bind:value={editText} rows="2" class="field resize-none"></textarea>
 					<div class="mt-2 flex justify-end gap-2 text-sm">
-						<button type="button" onclick={() => (editId = null)} class="px-2 py-1 text-stone-500">
-							Abbrechen
-						</button>
 						<button
 							type="button"
-							onclick={saveEdit}
-							class="rounded-full bg-stone-900 px-3 py-1 font-medium text-white"
+							onclick={() => (editId = null)}
+							class="px-2 py-1 text-zinc-400 hover:text-zinc-200"
 						>
+							Abbrechen
+						</button>
+						<button type="button" onclick={saveEdit} class="btn-primary px-3 py-1">
 							Speichern
 						</button>
 					</div>
 				{:else}
 					<div class="flex items-start justify-between gap-2">
-						<p class="whitespace-pre-wrap text-sm text-stone-800">{n.content}</p>
-						<div class="flex shrink-0 gap-1.5 text-stone-300">
+						<p class="text-sm whitespace-pre-wrap text-zinc-100">{n.content}</p>
+						<div class="flex shrink-0 gap-2 text-zinc-600">
 							<button
 								type="button"
 								onclick={() => setPinned(n.id, !n.pinned)}
 								aria-label={n.pinned ? 'Pin entfernen' : 'Anpinnen'}
-								class={n.pinned ? 'text-amber-500' : 'hover:text-stone-600'}
+								class="transition-colors {n.pinned ? 'text-amber-300' : 'hover:text-zinc-300'}"
 							>
-								📌
+								<Icon name="bookmark" class="h-4 w-4" filled={n.pinned} />
 							</button>
 							<button
 								type="button"
 								onclick={() => startEdit(n)}
 								aria-label="Bearbeiten"
-								class="hover:text-stone-600">✎</button
+								class="transition-colors hover:text-zinc-300"
 							>
+								<Icon name="pencil" class="h-4 w-4" />
+							</button>
 							<button
 								type="button"
 								onclick={() => softDeleteNote(n.id)}
 								aria-label="Löschen"
-								class="hover:text-rose-500">✕</button
+								class="transition-colors hover:text-rose-400"
 							>
+								<Icon name="x" class="h-4 w-4" />
+							</button>
 						</div>
 					</div>
 
 					<div class="mt-2 flex flex-wrap items-center gap-1">
 						{#each n.tags as t (t)}
 							<span
-								class="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600"
+								class="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-300 ring-1 ring-white/10 ring-inset"
 							>
 								#{t}
 								<button
 									type="button"
 									onclick={() => removeTag(n.id, t)}
 									aria-label="Tag entfernen"
-									class="text-stone-400 hover:text-rose-500">×</button
+									class="text-zinc-500 hover:text-rose-400">×</button
 								>
 							</span>
 						{/each}
@@ -186,8 +178,7 @@
 								onkeydown={(e) => {
 									if (e.key === 'Enter') tagHinzufuegen(n.id);
 								}}
-								class="w-24 rounded-full border border-stone-200 px-2 py-0.5 text-xs outline-none
-									focus:border-teal-400"
+								class="w-24 rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-teal-300/50"
 							/>
 						{:else}
 							<button
@@ -196,19 +187,20 @@
 									tagFor = n.id;
 									tagText = '';
 								}}
-								class="rounded-full px-2 py-0.5 text-xs text-stone-400 hover:text-stone-700">+ Tag</button
+								class="rounded-full px-2 py-0.5 text-xs text-zinc-500 hover:text-zinc-200"
+								>+ Tag</button
 							>
 						{/if}
 					</div>
 
-					<div class="mt-2 flex items-center gap-2 text-xs text-stone-400">
+					<div class="mt-2 flex items-center gap-2 text-xs text-zinc-500">
 						<button
 							type="button"
 							onclick={() => setCategory(n.id, naechste[n.category])}
-							class="rounded-full px-2 py-0.5 {catStyle[n.category]}"
+							class="chip px-2 py-0.5 {categoryBadge[n.category]}"
 							title="Kategorie wechseln"
 						>
-							{catLabel[n.category]}
+							{categoryLabel[n.category]}
 						</button>
 						<span>{datumZeit(n.createdAt)}</span>
 					</div>

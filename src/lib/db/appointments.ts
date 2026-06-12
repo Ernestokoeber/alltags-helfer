@@ -1,9 +1,10 @@
 import { db, uuid } from './db';
-import type { Appointment } from './types';
+import type { Appointment, Category } from './types';
 
 export async function addAppointment(input: {
 	title: string;
 	startAt: number;
+	category?: Category;
 	location?: string;
 	description?: string;
 	reminderLead?: number;
@@ -13,6 +14,7 @@ export async function addAppointment(input: {
 		id: uuid(),
 		title: input.title.trim(),
 		startAt: input.startAt,
+		category: input.category ?? 'offen',
 		location: input.location?.trim() || undefined,
 		description: input.description?.trim() || undefined,
 		reminderLead: input.reminderLead,
