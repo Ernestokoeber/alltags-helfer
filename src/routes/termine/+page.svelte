@@ -51,7 +51,10 @@
 
 	<div class="card space-y-2.5 p-4">
 		<input bind:value={titel} placeholder="Titel" class="field" />
-		<input bind:value={wann} type="datetime-local" class="field" />
+		<label class="flex flex-col gap-1 text-xs text-zinc-400">
+			Wann
+			<input bind:value={wann} type="datetime-local" class="field" />
+		</label>
 		<input bind:value={ort} placeholder="Ort (optional)" class="field" />
 		<div class="flex items-center justify-between gap-2">
 			<div class="flex gap-1" role="group" aria-label="Termin-Kategorie wählen">

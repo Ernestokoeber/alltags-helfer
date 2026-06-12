@@ -72,25 +72,23 @@
 			placeholder="Beschreibung (optional)"
 			class="field resize-none"
 		></textarea>
-		<div class="flex flex-wrap items-end gap-3">
-			<label class="flex flex-col gap-1 text-xs text-zinc-400">
-				Zieldatum (optional)
-				<input bind:value={zieldatum} type="date" class="field" />
-			</label>
-			<div class="flex flex-col gap-1 text-xs text-zinc-400">
-				<span>Kategorie</span>
-				<div class="flex gap-1.5" role="group" aria-label="Kategorie wählen">
-					{#each ['offen', 'privat', 'geschaeftlich'] as const as c (c)}
-						<button
-							type="button"
-							onclick={() => (kategorie = c)}
-							aria-pressed={kategorie === c}
-							class="chip py-1.5 {kategorie === c ? categoryChipActive[c] : 'chip-idle'}"
-						>
-							{categoryLabel[c]}
-						</button>
-					{/each}
-				</div>
+		<label class="flex flex-col gap-1 text-xs text-zinc-400">
+			Zieldatum (optional)
+			<input bind:value={zieldatum} type="date" class="field" />
+		</label>
+		<div class="flex flex-col gap-1 text-xs text-zinc-400">
+			<span>Kategorie</span>
+			<div class="flex flex-wrap gap-1.5" role="group" aria-label="Kategorie wählen">
+				{#each ['offen', 'privat', 'geschaeftlich'] as const as c (c)}
+					<button
+						type="button"
+						onclick={() => (kategorie = c)}
+						aria-pressed={kategorie === c}
+						class="chip {kategorie === c ? categoryChipActive[c] : 'chip-idle'}"
+					>
+						{categoryLabel[c]}
+					</button>
+				{/each}
 			</div>
 		</div>
 		<div class="flex justify-end">
