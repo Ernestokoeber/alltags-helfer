@@ -16,19 +16,21 @@
 		@apply rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-xl;
 	}
 
-	/* Eingabefelder auf Glas. */
+	/* Eingabefelder auf Glas. text-base auf Mobile ist Pflicht: unter 16px
+	   zoomt iOS beim Fokussieren automatisch in die Seite. min-h vereinheitlicht
+	   native Datums-/Zeit-Picker (iOS rendert sie sonst niedriger). */
 	.field {
-		@apply w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/15;
+		@apply min-h-11 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-base text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-teal-300/50 focus:ring-2 focus:ring-teal-300/15 sm:min-h-0 sm:text-sm;
 	}
 
 	/* Primäraktion: hell und kontrastreich auf dunklem Grund. */
 	.btn-primary {
-		@apply rounded-full bg-zinc-100 px-4 py-1.5 text-sm font-semibold text-zinc-900 transition hover:bg-white active:scale-95 disabled:opacity-30 disabled:active:scale-100;
+		@apply rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-white active:scale-95 disabled:opacity-30 disabled:active:scale-100;
 	}
 
 	/* Neutrale Chip-Grundform (aktiver Zustand kommt im Markup dazu). */
 	.chip {
-		@apply rounded-full px-3 py-1 text-xs font-medium transition-colors;
+		@apply rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
 	}
 	.chip-idle {
 		@apply bg-white/[0.06] text-zinc-400 ring-1 ring-white/10 ring-inset hover:text-zinc-200;
