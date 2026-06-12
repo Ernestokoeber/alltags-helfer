@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import { persistStorage, probeIndexedDB } from '$lib/db/health';
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import type { Sphere } from '$lib/sphere';
@@ -99,10 +100,10 @@
 				</div>
 
 				<a
-					href="/einstellungen"
+					href="{base}/einstellungen"
 					aria-label="Einstellungen"
 					class="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl transition-colors
-						{page.url.pathname === '/einstellungen' ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-200'}"
+						{page.url.pathname === `${base}/einstellungen` ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-200'}"
 				>
 					<Icon name="gear" class="h-4 w-4" />
 				</a>
@@ -134,10 +135,11 @@
 			class="mx-auto flex w-[calc(100%-2.5rem)] max-w-md items-stretch justify-between rounded-2xl border border-white/10 bg-zinc-900/85 px-2 py-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl"
 		>
 			{#each nav as item (item.href)}
-				{@const active = page.url.pathname === item.href}
+				{@const href = item.href === '/' ? `${base}/` : base + item.href}
+				{@const active = page.url.pathname === href}
 				<li class="flex-1">
 					<a
-						href={item.href}
+						{href}
 						class="flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors
 							{active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-200'}"
 						aria-current={active ? 'page' : undefined}

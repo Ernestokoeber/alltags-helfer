@@ -1,0 +1,54 @@
+# Baut die PWA und veröffentlicht sie auf GitHub Pages
+# (https://<owner>.github.io/<repo>/). Läuft bei jedem Push auf main;
+# der Feature-Branch ist vorübergehend mit drin, damit das Redesign
+# schon vor dem Merge auf dem Handy testbar ist.
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/repo-redesign-work-personal-536m1o
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          # GitHub Pages serviert unter /<repo-name>/ (siehe svelte.config.js).
+          BASE_PATH: /${{ github.event.repository.name }}
+      - uses: actions/configure-pages@v5
+        with:
+          # Aktiviert GitHub Pages (Source: GitHub Actions) beim ersten Lauf.
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
