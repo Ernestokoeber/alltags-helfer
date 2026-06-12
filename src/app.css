@@ -41,3 +41,19 @@
 :root {
 	color-scheme: dark;
 }
+
+/* iOS-WebKit: native Datums-/Zeit-Felder haben eine intrinsische Mindestbreite
+   und ignorieren w-full/Flex-Grenzen — sie liefen rechts aus den Karten heraus.
+   appearance: none macht sie stylebar, min-width: 0 lässt sie schrumpfen. */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'] {
+	-webkit-appearance: none;
+	appearance: none;
+	min-width: 0;
+}
+
+/* iOS zentriert den Wert in Datums-/Zeit-Feldern — linksbündig wie Textfelder. */
+input::-webkit-date-and-time-value {
+	text-align: left;
+}
