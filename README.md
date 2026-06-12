@@ -24,17 +24,20 @@ offline-fähig), Inline-SVG-Icons statt Emojis.
 
 ## Status
 
-In Umsetzung — alle 5 Tabs funktional, **installierbare PWA** (Service Worker +
-Offline), **61 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+In Umsetzung — alle 6 Tabs funktional, **installierbare PWA** (Service Worker +
+Offline), **77 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
 (Abschnitt „Umgesetzt").
 
 **Funktionen:** globale Sphären-Sicht Privat/Arbeit/Alles (in localStorage gemerkt),
 Heute (Schnellnotiz + Briefing + „Brücke" mit dem nächsten Termin je Sphäre),
-Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie), Termine (mit
-Kategorie + Vorbereitungs-Tasks), Bucketlist (Beschreibung/Zieldatum/Kategorie,
-Erledigte ausblendbar), Schlaf (Dauer + Wochenschnitt + Bearbeiten), lokale
-Auto-Kategorie für „offen"-Notizen (kein Cloud). Installierbar (Manifest + Icons),
-offline-fähig, `storage.persist()` + Warnung bei blockierter IndexedDB.
+Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie), **Projekte**
+(laufende Vorhaben bündeln Notizen, Detailansicht mit Projekt-Notiz, archivierbar),
+Termine (mit Kategorie + Vorbereitungs-Tasks), Bucketlist (Beschreibung/Zieldatum/
+Kategorie, Erledigte ausblendbar), Schlaf (Dauer + Wochenschnitt + Bearbeiten),
+lokale Auto-Kategorie für „offen"-Notizen (kein Cloud), **Datensicherung**
+(JSON-Export/-Import mit Last-Write-Wins-Merge, unter Einstellungen). Installierbar
+(Manifest + Icons), offline-fähig, `storage.persist()` + Warnung bei blockierter
+IndexedDB.
 
 ## Entwicklung
 

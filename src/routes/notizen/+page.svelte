@@ -9,6 +9,7 @@
 		addTag,
 		removeTag
 	} from '$lib/db/notes';
+	import { allProjects } from '$lib/db/projects';
 	import type { Category, Note } from '$lib/db/types';
 	import { filterNotes, type CategoryFilter } from '$lib/notes-filter';
 	import { categoryLabel, categoryBadge, filterBySphere } from '$lib/sphere';
@@ -20,6 +21,15 @@
 	let alle = $state<Note[]>([]);
 	$effect(() => {
 		const sub = liveQuery(() => allNotes()).subscribe((v) => (alle = v));
+		return () => sub.unsubscribe();
+	});
+
+	// Projektnamen für das Projekt-Chip an zugeordneten Notizen.
+	let projektName = $state<Map<string, string>>(new Map());
+	$effect(() => {
+		const sub = liveQuery(() => allProjects()).subscribe(
+			(v) => (projektName = new Map(v.map((p) => [p.id, p.name])))
+		);
 		return () => sub.unsubscribe();
 	});
 
@@ -202,6 +212,14 @@
 						>
 							{categoryLabel[n.category]}
 						</button>
+						{#if n.projectId && projektName.get(n.projectId)}
+							<span
+								class="flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-zinc-400 ring-1 ring-white/10 ring-inset"
+							>
+								<Icon name="folder" class="h-3 w-3" />
+								{projektName.get(n.projectId)}
+							</span>
+						{/if}
 						<span>{datumZeit(n.createdAt)}</span>
 					</div>
 					<KategorieVorschlag note={n} />

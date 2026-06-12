@@ -2,7 +2,11 @@ import { db, uuid } from './db';
 import type { Category, Note } from './types';
 
 // Neue Notiz anlegen (P0: nur Text). Gibt die erzeugte Notiz zurück.
-export async function addNote(input: { content: string; category?: Category }): Promise<Note> {
+export async function addNote(input: {
+	content: string;
+	category?: Category;
+	projectId?: string;
+}): Promise<Note> {
 	const now = Date.now();
 	const note: Note = {
 		id: uuid(),
@@ -12,6 +16,7 @@ export async function addNote(input: { content: string; category?: Category }): 
 		pinned: false,
 		importance: 0,
 		tags: [],
+		projectId: input.projectId,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null

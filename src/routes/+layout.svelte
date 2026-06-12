@@ -22,6 +22,7 @@
 	const nav: { href: string; label: string; icon: IconName }[] = [
 		{ href: '/', label: 'Heute', icon: 'sun' },
 		{ href: '/notizen', label: 'Notizen', icon: 'note' },
+		{ href: '/projekte', label: 'Projekte', icon: 'folder' },
 		{ href: '/termine', label: 'Termine', icon: 'calendar' },
 		{ href: '/bucketlist', label: 'Bucket', icon: 'sparkles' },
 		{ href: '/schlaf', label: 'Schlaf', icon: 'moon' }
@@ -74,26 +75,37 @@
 				</div>
 			</div>
 
-			<!-- Sphären-Umschalter -->
-			<div
-				class="flex rounded-full border border-white/10 bg-white/[0.05] p-1 backdrop-blur-xl"
-				role="group"
-				aria-label="Sphäre wählen"
-			>
-				{#each sphären as s (s.wert)}
-					{@const aktiv = sphaere.current === s.wert}
-					<button
-						type="button"
-						onclick={() => sphaere.set(s.wert)}
-						aria-pressed={aktiv}
-						title={s.label}
-						class="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-all duration-300
-							{aktiv ? s.active : 'text-zinc-500 hover:text-zinc-300'}"
-					>
-						<Icon name={s.icon} class="h-3.5 w-3.5" />
-						{#if aktiv}<span>{s.label}</span>{/if}
-					</button>
-				{/each}
+			<div class="flex items-center gap-1.5">
+				<!-- Sphären-Umschalter -->
+				<div
+					class="flex rounded-full border border-white/10 bg-white/[0.05] p-1 backdrop-blur-xl"
+					role="group"
+					aria-label="Sphäre wählen"
+				>
+					{#each sphären as s (s.wert)}
+						{@const aktiv = sphaere.current === s.wert}
+						<button
+							type="button"
+							onclick={() => sphaere.set(s.wert)}
+							aria-pressed={aktiv}
+							title={s.label}
+							class="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-all duration-300
+								{aktiv ? s.active : 'text-zinc-500 hover:text-zinc-300'}"
+						>
+							<Icon name={s.icon} class="h-3.5 w-3.5" />
+							{#if aktiv}<span>{s.label}</span>{/if}
+						</button>
+					{/each}
+				</div>
+
+				<a
+					href="/einstellungen"
+					aria-label="Einstellungen"
+					class="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl transition-colors
+						{page.url.pathname === '/einstellungen' ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-200'}"
+				>
+					<Icon name="gear" class="h-4 w-4" />
+				</a>
 			</div>
 		</div>
 	</header>

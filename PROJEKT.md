@@ -16,6 +16,8 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 
 > Wird bei jedem Feature-Commit mitgepflegt.
 
+- **Projekte (Arbeits-Notizen gebündelt):** eigene Seite mit Projektliste (Name, Beschreibung, Kategorie, Notiz-Anzahl) und Detailansicht je Projekt mit schneller Projekt-Notiz (erbt die Projekt-Kategorie). Archivieren statt löschen; Löschen löst nur die Zuordnung, Notizen bleiben. Notizen tragen ein Projekt-Chip in der Notizen-Liste. Dexie-Migration **v3** (`projects`-Tabelle + `projectId`-Index an `notes`).
+- **Datensicherung (Export/Import):** Seite „Einstellungen" (Zahnrad im Header): alle Daten als JSON-Datei exportieren und auf einem anderen Gerät importieren — Merge per **Last-Write-Wins** über `updatedAt` (gleiche Konfliktregel wie der spätere P6-Sync), Tombstones inklusive, v1/v2-Sicherungen werden beim Import migriert. Überbrückt den fehlenden Geräte-Sync.
 - **Sphären-Sicht (Privat ⇄ Arbeit):** globaler Umschalter im Header (Privat / Alles / Arbeit, in localStorage gemerkt) filtert Notizen, Termine, Bucketlist und das Heute-Briefing. „Offene" Einträge erscheinen in jeder Sphäre. Reine Logik in `src/lib/sphere.ts` (getestet), Zustand in `src/lib/sphere-state.svelte.ts`. **Termine haben dafür eine Kategorie bekommen** (Dexie-Migration v2, Bestand → `offen`). UI-Label für `geschaeftlich` ist jetzt „Arbeit".
 - **Design „Zwei Sphären":** dunkles Premium-Theme (zinc-950) mit Glas-Karten, Farbwelten Privat = Amber / Arbeit = Himmelblau (als weiche Hintergrund-Flächen, Badges und Chips), schwebende Glas-Navigation, Outfit-Schrift (selbst gehostet via `@fontsource-variable/outfit`, offline-fähig), Inline-SVG-Icons (`src/lib/components/Icon.svelte`) statt Emojis, neues App-Icon/Favicon (zwei verschmelzende Sphären, `scripts/gen-icons.mjs`). Wiederkehrende Bausteine (`card`, `field`, `btn-primary`, `chip`) in `src/app.css`.
 - **Fundament:** SvelteKit 2 + Svelte 5 + TypeScript + Tailwind v4, `adapter-static` (SPA), local-first via IndexedDB/Dexie (sync-fähiges Schema, UUID/`updatedAt`/Tombstone).
@@ -26,7 +28,7 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 - **Bucketlist:** anlegen mit **Beschreibung, Zieldatum und Kategorie** (Chips), erledigt umschalten, **Erledigte ein-/ausblenden**, löschen.
 - **Schlaf:** Eintrag (Datum/Zeiten/Qualität/Notiz), **Dauer-Berechnung** (auch über Mitternacht), letzte Nächte, **Wochenschnitt** (Ø der letzten 7 Nächte) und **Bearbeiten** (Eintrag ins Formular laden, Upsert ersetzt ihn).
 - **Auto-Kategorie:** lokaler Stichwort-Klassifizierer (`src/lib/classify.ts`, **kein Cloud**) schlägt für „offen"-Notizen Privat/Geschäftlich vor, Übernahme per Klick. *Gemini bewusst verworfen (Datenschutz).*
-- **Qualität:** **61 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik und UI-Komponenten (`@testing-library/svelte` + happy-dom).
+- **Qualität:** **77 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik, Backup/Projekte und UI-Komponenten (`@testing-library/svelte` + happy-dom).
 - **Dev/Git:** Multipass-VM `alltagshelfer-dev`, `scripts/vm-dev.sh`; Arbeit direkt auf `main`.
 
 **Noch offen:** echter iPhone-Test über HTTPS (Cloudflare Tunnel) — On-Device-Verifikation des Service Workers/Offline; „Heute"-Tipp (Entschleunigen); Erinnerungen (lokale Notifications); Spracheingabe (Diktat); optional automatischer E2E-Smoke (Playwright); Push + Geräte-Sync (P6).
@@ -97,7 +99,8 @@ Datenschutz-Wunsch ab). Folge: Rust steckt im **Server** (Axum), nicht im Client
 
 Bereits **sync-tauglich** (UUID-IDs, `updated_at`, Soft-Delete via `deleted_at`):
 
-- **Note** — `id, content, type(text|voice), category(privat|geschäftlich|offen), pinned, importance, audio_path?, transcript?, created_at, updated_at, deleted_at`
+- **Note** — `id, content, type(text|voice), category(privat|geschäftlich|offen), pinned, importance, project_id?, audio_path?, transcript?, created_at, updated_at, deleted_at`
+- **Project** — `id, name, description?, category, archived` (bündelt Notizen zu laufenden Vorhaben)
 - **Tag** + **NoteTag** (n:m)
 - **Appointment** — `id, title, start_at, category(privat|geschäftlich|offen), location?, description, reminder_lead, created/updated/deleted`
 - **PrepTask** — `id, appointment_id, title, done, remind_at`
