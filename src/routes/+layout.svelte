@@ -62,7 +62,12 @@
 		<div class="absolute top-1/3 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-teal-500/[0.07] blur-3xl"></div>
 	</div>
 
-	<header class="relative z-10 mx-auto w-full max-w-md px-5 pt-6 pb-2">
+	<!-- Safe-Area oben: Als installierte PWA (black-translucent) reicht die Seite
+	     bis unter die Notch/Statusleiste — der Header muss darunter beginnen. -->
+	<header
+		class="relative z-10 mx-auto w-full max-w-md px-5 pb-2"
+		style="padding-top: calc(env(safe-area-inset-top, 0px) + 1rem)"
+	>
 		<div class="flex items-center justify-between gap-3">
 			<div class="flex items-center gap-2.5">
 				<span
