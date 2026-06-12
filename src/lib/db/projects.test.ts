@@ -39,6 +39,9 @@ describe('Projekte', () => {
 	it('notesForProject: nur Notizen des Projekts, neueste zuerst, ohne gelöschte', async () => {
 		const p = await addProject({ name: 'Atlas' });
 		const n1 = await addNote({ content: 'Kickoff-Protokoll', projectId: p.id });
+		// Zeitstempel explizit zurücksetzen: zwei addNote() im selben Tick können
+		// dieselbe Millisekunde bekommen — dann wäre die Sortierung nicht definiert.
+		await db.notes.update(n1.id, { createdAt: n1.createdAt - 60_000 });
 		await addNote({ content: 'API-Schlüssel anfragen', projectId: p.id });
 		await addNote({ content: 'ohne Projekt' });
 		const weg = await addNote({ content: 'gelöscht', projectId: p.id });
