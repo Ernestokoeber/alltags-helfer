@@ -3,6 +3,7 @@
 	import { addAppointment, upcomingAppointments, deleteAppointment } from '$lib/db/appointments';
 	import { pickerProjects, type ProjectOption } from '$lib/db/projects';
 	import Vorbereitung from '$lib/components/Vorbereitung.svelte';
+	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { Appointment, Category } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
@@ -73,15 +74,7 @@
 			<input bind:value={wann} type="datetime-local" class="field" />
 		</label>
 		<input bind:value={ort} placeholder="Ort (optional)" class="field" />
-		<label class="flex items-center gap-1.5 text-xs text-zinc-400">
-			<Icon name="folder" class="h-3.5 w-3.5 shrink-0" />
-			<select bind:value={projektId} aria-label="Projekt für Termin" class="field min-w-0 py-1">
-				<option value="">Kein Projekt</option>
-				{#each projektOptionen as o (o.id)}
-					<option value={o.id}>{o.label}</option>
-				{/each}
-			</select>
-		</label>
+		<ProjektSelect bind:value={projektId} options={projektOptionen} label="Projekt für Termin" />
 		<div class="flex items-center justify-between gap-2">
 			{#if projektId}
 				<span class="text-xs text-zinc-500">Kategorie folgt dem Projekt</span>

@@ -16,6 +16,7 @@
 	import { categoryLabel, categoryBadge, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
+	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
@@ -115,21 +116,13 @@
 			placeholder="Schnelle Notiz …"
 			class="field resize-none"
 		></textarea>
-		<div class="flex items-center justify-between gap-2">
-			<label class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-400">
-				<Icon name="folder" class="h-3.5 w-3.5 shrink-0" />
-				<select bind:value={neuProjektId} aria-label="Projekt für Notiz" class="field min-w-0 py-1">
-					<option value="">Kein Projekt</option>
-					{#each projektOptionen as o (o.id)}
-						<option value={o.id}>{o.label}</option>
-					{/each}
-				</select>
-			</label>
+		<ProjektSelect bind:value={neuProjektId} options={projektOptionen} label="Projekt für Notiz" />
+		<div class="flex justify-end">
 			<button
 				type="button"
 				onclick={schnellnotiz}
 				disabled={!neueNotiz.trim()}
-				class="btn-primary shrink-0">Notiz anlegen</button
+				class="btn-primary">Notiz anlegen</button
 			>
 		</div>
 	</div>
