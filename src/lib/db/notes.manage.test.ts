@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db';
+import type { Note } from './types';
 import {
 	addNote,
 	allNotes,
@@ -8,7 +9,11 @@ import {
 	setPinned,
 	setCategory,
 	addTag,
-	removeTag
+	removeTag,
+	setNoteDue,
+	setNoteCompleted,
+	isOpen,
+	sortTasks
 } from './notes';
 
 beforeEach(async () => {
@@ -73,5 +78,69 @@ describe('Notiz-Verwaltung', () => {
 		expect((await db.notes.get(n.id))?.pinned).toBe(false);
 		await setPinned(n.id, true);
 		expect((await db.notes.get(n.id))?.pinned).toBe(true);
+	});
+});
+
+describe('Notizen als Aufgaben (Frist & Erledigt)', () => {
+	it('addNote übernimmt eine Frist und ist anfangs offen', async () => {
+		const frist = Date.now() + 86_400_000;
+		const n = await addNote({ content: 'Aufgabe mit Frist', dueAt: frist });
+		expect(n.dueAt).toBe(frist);
+		expect(n.completedAt).toBeNull();
+		expect(isOpen(n)).toBe(true);
+	});
+
+	it('addNote ohne Frist: dueAt = null, completedAt = null', async () => {
+		const n = await addNote({ content: 'ohne Frist' });
+		expect(n.dueAt).toBeNull();
+		expect(n.completedAt).toBeNull();
+	});
+
+	it('setNoteDue setzt und entfernt die Frist', async () => {
+		const n = await addNote({ content: 'x' });
+		const frist = Date.now() + 86_400_000;
+		await setNoteDue(n.id, frist);
+		expect((await db.notes.get(n.id))?.dueAt).toBe(frist);
+		await setNoteDue(n.id, null);
+		expect((await db.notes.get(n.id))?.dueAt).toBeNull();
+	});
+
+	it('setNoteCompleted markiert erledigt und wieder offen', async () => {
+		const n = await addNote({ content: 'x' });
+		await setNoteCompleted(n.id, true);
+		const erledigt = await db.notes.get(n.id);
+		expect(typeof erledigt?.completedAt).toBe('number');
+		expect(isOpen(erledigt!)).toBe(false);
+
+		await setNoteCompleted(n.id, false);
+		const offen = await db.notes.get(n.id);
+		expect(offen?.completedAt).toBeNull();
+		expect(isOpen(offen!)).toBe(true);
+	});
+
+	it('sortTasks: offene vor erledigten; offene nach Frist; erledigte zuletzt', () => {
+		const base = 1_000_000_000_000;
+		const mk = (over: Partial<Note> & { id: string }): Note => ({
+			id: over.id,
+			content: '',
+			type: 'text',
+			category: 'offen',
+			pinned: false,
+			importance: 0,
+			tags: [],
+			createdAt: over.createdAt ?? base,
+			updatedAt: base,
+			deletedAt: null,
+			dueAt: over.dueAt ?? null,
+			completedAt: over.completedAt ?? null
+		});
+		const fristFrueh = mk({ id: 'frueh', dueAt: base + 1000 });
+		const fristSpaet = mk({ id: 'spaet', dueAt: base + 5000 });
+		const ohneFrist = mk({ id: 'ohne', createdAt: base + 100 });
+		const erledigt = mk({ id: 'done', completedAt: base + 2000 });
+		const erledigtNeuer = mk({ id: 'done2', completedAt: base + 9000 });
+
+		const sortiert = sortTasks([erledigt, ohneFrist, fristSpaet, erledigtNeuer, fristFrueh]);
+		expect(sortiert.map((n) => n.id)).toEqual(['frueh', 'spaet', 'ohne', 'done2', 'done']);
 	});
 });

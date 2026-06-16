@@ -8,6 +8,7 @@ export async function addProject(input: {
 	name: string;
 	description?: string;
 	category?: Category;
+	parentId?: string;
 }): Promise<Project> {
 	const now = Date.now();
 	const projekt: Project = {
@@ -16,6 +17,7 @@ export async function addProject(input: {
 		description: input.description?.trim() || undefined,
 		category: input.category ?? 'geschaeftlich',
 		archived: false,
+		parentId: input.parentId,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null
@@ -37,17 +39,131 @@ export async function setProjectArchived(id: string, archived: boolean): Promise
 	await db.projects.update(id, { archived, updatedAt: Date.now() });
 }
 
-// Soft-Delete; zugeordnete Notizen bleiben bestehen und verlieren nur den Bezug.
+// Direkte Unterprojekte einer Ebene: parentId === gegebenem Wert. Mit null
+// liefert es die Wurzelprojekte (ohne parentId). Sortierung wie allProjects.
+export async function childProjects(parentId: string | null): Promise<Project[]> {
+	const arr = await db.projects.toArray();
+	return arr
+		.filter((p) => p.deletedAt === null && (p.parentId ?? null) === parentId)
+		.sort((a, b) => Number(a.archived) - Number(b.archived) || b.updatedAt - a.updatedAt);
+}
+
+// Hat das Projekt aktive Unterprojekte? Entscheidet Ordner vs. Arbeitsbereich.
+export async function hasChildren(projectId: string): Promise<boolean> {
+	const arr = await db.projects.toArray();
+	return arr.some((p) => p.deletedAt === null && p.parentId === projectId);
+}
+
+// Pfad von der Wurzel bis zum Projekt (inklusive) — für die Breadcrumb.
+// Zyklus-Schutz über ein Set, falls parentId je inkonsistent würde.
+export async function projectPath(projectId: string): Promise<Project[]> {
+	const all = await db.projects.toArray();
+	const byId = new Map(all.map((p) => [p.id, p]));
+	const path: Project[] = [];
+	const seen = new Set<string>();
+	let cur = byId.get(projectId);
+	while (cur && !seen.has(cur.id)) {
+		seen.add(cur.id);
+		path.unshift(cur);
+		cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+	}
+	return path;
+}
+
+// Inhalte (Notizen/Termine) nur in Blättern: erlaubt, solange keine
+// Unterprojekte existieren.
+export async function canAddContent(projectId: string): Promise<boolean> {
+	return !(await hasChildren(projectId));
+}
+
+// Unterprojekt nur erlaubt, solange das Projekt selbst noch keine Inhalte
+// (Notizen oder Termine) hat — sonst bräche „Inhalte nur im Blatt".
+export async function canAddSubproject(projectId: string): Promise<boolean> {
+	const notes = await db.notes.where('projectId').equals(projectId).toArray();
+	if (notes.some((n) => n.deletedAt === null)) return false;
+	const apps = await db.appointments.where('projectId').equals(projectId).toArray();
+	if (apps.some((a) => a.deletedAt === null)) return false;
+	return true;
+}
+
+// Auswahloption für Projekt-Dropdowns (Notizen-/Termine-Tab): Inhalte sind nur
+// in Blättern erlaubt, daher nur Projekte ohne Unterprojekte — beschriftet mit
+// dem vollen Pfad (ITM › Auslagern24.de) zur eindeutigen Zuordnung.
+export interface ProjectOption {
+	id: string;
+	label: string;
+	category: Category;
+}
+
+export async function pickerProjects(): Promise<ProjectOption[]> {
+	const all = (await db.projects.toArray()).filter((p) => p.deletedAt === null);
+	const byId = new Map(all.map((p) => [p.id, p]));
+	const istElternteil = new Set(all.filter((p) => p.parentId).map((p) => p.parentId as string));
+	const pfadLabel = (p: Project): string => {
+		const teile: string[] = [];
+		const seen = new Set<string>();
+		let cur: Project | undefined = p;
+		while (cur && !seen.has(cur.id)) {
+			seen.add(cur.id);
+			teile.unshift(cur.name);
+			cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+		}
+		return teile.join(' › ');
+	};
+	return all
+		.filter((p) => !istElternteil.has(p.id)) // nur Blätter
+		.map((p) => ({ id: p.id, label: pfadLabel(p), category: p.category }))
+		.sort((a, b) => a.label.localeCompare(b.label, 'de'));
+}
+
+// Anzahl aktiver direkter Unterprojekte je Projekt (für die Ordner-Anzeige).
+export async function childCountByProject(): Promise<Map<string, number>> {
+	const arr = await db.projects.toArray();
+	const map = new Map<string, number>();
+	for (const p of arr) {
+		if (p.deletedAt === null && p.parentId) {
+			map.set(p.parentId, (map.get(p.parentId) ?? 0) + 1);
+		}
+	}
+	return map;
+}
+
+// Soft-Delete eines Projekts samt komplettem Teilbaum (alle Nachfahren).
+// Zugeordnete Notizen und Termine bleiben bestehen und verlieren nur den Bezug.
 export async function deleteProject(id: string): Promise<void> {
 	const now = Date.now();
-	await db.projects.update(id, { deletedAt: now, updatedAt: now });
-	await db.notes
-		.where('projectId')
-		.equals(id)
-		.modify((n) => {
-			delete n.projectId;
-			n.updatedAt = now;
-		});
+	const all = await db.projects.toArray();
+
+	// Teilbaum sammeln: Start-Projekt + alle (transitiven) Nachfahren.
+	const ids = new Set<string>([id]);
+	let added = true;
+	while (added) {
+		added = false;
+		for (const p of all) {
+			if (p.parentId && ids.has(p.parentId) && !ids.has(p.id)) {
+				ids.add(p.id);
+				added = true;
+			}
+		}
+	}
+
+	for (const pid of ids) {
+		await db.projects.update(pid, { deletedAt: now, updatedAt: now });
+		await db.notes
+			.where('projectId')
+			.equals(pid)
+			.modify((n) => {
+				delete n.projectId;
+				n.updatedAt = now;
+			});
+		await db.appointments
+			.where('projectId')
+			.equals(pid)
+			.modify((a) => {
+				delete a.projectId;
+				a.updatedAt = now;
+			});
+	}
 }
 
 // Notizen eines Projekts, neueste zuerst, ohne gelöschte.

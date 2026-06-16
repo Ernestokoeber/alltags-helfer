@@ -19,16 +19,20 @@ export interface Note extends SyncMeta {
 	importance: number; // 0 = normal, höher = wichtiger
 	tags: string[]; // Tag-Namen (in P0 bewusst einfach inline gehalten)
 	projectId?: string; // optional einem Projekt zugeordnet (seit v3)
+	dueAt?: number | null; // Aufgaben-Frist „bis wann erledigt"; null/fehlt = keine Frist (seit v4)
+	completedAt?: number | null; // wann als erledigt markiert; null/fehlt = offen (seit v4)
 	audioPath?: string;
 	transcript?: string;
 }
 
 // Laufendes Projekt (v. a. Arbeit, aber auch privat möglich) — bündelt Notizen.
+// Verschachtelbar über parentId: ITM → Auslagern24.de → … (Baumstruktur, seit v4).
 export interface Project extends SyncMeta {
 	name: string;
 	description?: string;
 	category: Category;
 	archived: boolean; // abgeschlossen/pausiert, bleibt mit Notizen erhalten
+	parentId?: string; // übergeordnetes Projekt; fehlt = Wurzel (seit v4)
 }
 
 export interface Tag extends SyncMeta {
@@ -42,6 +46,7 @@ export interface Appointment extends SyncMeta {
 	location?: string;
 	description?: string;
 	reminderLead?: number; // Minuten vor startAt
+	projectId?: string; // optional einem Projekt zugeordnet (seit v4)
 }
 
 export interface PrepTask extends SyncMeta {

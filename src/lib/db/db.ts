@@ -57,6 +57,16 @@ export class AppDB extends Dexie {
 			projects: '&id, name, category, archived, updatedAt, deletedAt',
 			notes: '&id, category, pinned, projectId, createdAt, updatedAt, deletedAt, *tags'
 		});
+		// v4: Projekt-Hierarchie (parentId), Aufgaben-Felder an Notizen (dueAt für
+		// die Frist, completedAt für „erledigt") und Projektbezug an Terminen.
+		// Alle neuen Felder sind optional → keine Daten-Migration nötig: Altbestand
+		// = Wurzel-Projekt / keine Frist / offen / kein Projektbezug. Hier kommen nur
+		// die zusätzlichen Indizes hinzu (Dexie reindiziert automatisch).
+		this.version(4).stores({
+			projects: '&id, name, category, archived, parentId, updatedAt, deletedAt',
+			appointments: '&id, startAt, category, projectId, updatedAt, deletedAt',
+			notes: '&id, category, pinned, projectId, dueAt, createdAt, updatedAt, deletedAt, *tags'
+		});
 	}
 }
 

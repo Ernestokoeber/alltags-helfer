@@ -2,10 +2,12 @@ import { db, uuid } from './db';
 import type { Category, Note } from './types';
 
 // Neue Notiz anlegen (P0: nur Text). Gibt die erzeugte Notiz zurück.
+// dueAt setzt optional eine Aufgaben-Frist; neue Notizen sind immer offen.
 export async function addNote(input: {
 	content: string;
 	category?: Category;
 	projectId?: string;
+	dueAt?: number | null;
 }): Promise<Note> {
 	const now = Date.now();
 	const note: Note = {
@@ -17,6 +19,8 @@ export async function addNote(input: {
 		importance: 0,
 		tags: [],
 		projectId: input.projectId,
+		dueAt: input.dueAt ?? null,
+		completedAt: null,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null
@@ -71,6 +75,42 @@ export async function setPinned(id: string, pinned: boolean): Promise<void> {
 // Kategorie ändern (Privat/Geschäftlich/Offen).
 export async function setCategory(id: string, category: Category): Promise<void> {
 	await db.notes.update(id, { category, updatedAt: Date.now() });
+}
+
+// Aufgaben-Frist setzen oder entfernen (null = keine Frist).
+export async function setNoteDue(id: string, dueAt: number | null): Promise<void> {
+	await db.notes.update(id, { dueAt, updatedAt: Date.now() });
+}
+
+// Erledigt-Status umschalten: completedAt = jetzt (erledigt) bzw. null (offen).
+export async function setNoteCompleted(id: string, done: boolean): Promise<void> {
+	await db.notes.update(id, { completedAt: done ? Date.now() : null, updatedAt: Date.now() });
+}
+
+// Eine Notiz gilt als offen, solange sie nicht als erledigt markiert ist.
+export function isOpen(n: Note): boolean {
+	return n.completedAt == null;
+}
+
+// Aufgaben-Reihenfolge (reine Funktion, gut testbar):
+//   1. offene vor erledigten
+//   2. offene: mit Frist zuerst (Frist aufsteigend), dann fristlose (neueste zuerst)
+//   3. erledigte: zuletzt abgeschlossene zuerst
+export function sortTasks(notes: Note[]): Note[] {
+	return [...notes].sort((a, b) => {
+		const ao = isOpen(a);
+		const bo = isOpen(b);
+		if (ao !== bo) return ao ? -1 : 1;
+		if (ao) {
+			const ad = a.dueAt ?? null;
+			const bd = b.dueAt ?? null;
+			if (ad !== null && bd !== null) return ad - bd;
+			if (ad !== null) return -1;
+			if (bd !== null) return 1;
+			return b.createdAt - a.createdAt;
+		}
+		return (b.completedAt ?? 0) - (a.completedAt ?? 0);
+	});
 }
 
 // Tag hinzufügen (kleingeschrieben, dedupliziert).

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
 	import {
+		addNote,
 		allNotes,
 		softDeleteNote,
 		setPinned,
@@ -9,7 +10,7 @@
 		addTag,
 		removeTag
 	} from '$lib/db/notes';
-	import { allProjects } from '$lib/db/projects';
+	import { allProjects, pickerProjects, type ProjectOption } from '$lib/db/projects';
 	import type { Category, Note } from '$lib/db/types';
 	import { filterNotes, type CategoryFilter } from '$lib/notes-filter';
 	import { categoryLabel, categoryBadge, filterBySphere } from '$lib/sphere';
@@ -32,6 +33,24 @@
 		);
 		return () => sub.unsubscribe();
 	});
+
+	// Auswahlbare Projekte (nur Blätter, mit Pfad) für die Schnellnotiz.
+	let projektOptionen = $state<ProjectOption[]>([]);
+	$effect(() => {
+		const sub = liveQuery(() => pickerProjects()).subscribe((v) => (projektOptionen = v));
+		return () => sub.unsubscribe();
+	});
+
+	// Schnellnotiz: optional direkt einem Projekt zuordnen (erbt dessen Kategorie).
+	let neueNotiz = $state('');
+	let neuProjektId = $state(''); // '' = kein Projekt
+	async function schnellnotiz() {
+		const inhalt = neueNotiz.trim();
+		if (!inhalt) return;
+		const proj = projektOptionen.find((p) => p.id === neuProjektId);
+		await addNote({ content: inhalt, category: proj?.category ?? 'offen', projectId: proj?.id });
+		neueNotiz = '';
+	}
 
 	// Erst die globale Sphäre, dann Suche + Kategorie-Chips als Feinfilter.
 	let suche = $state('');
@@ -87,6 +106,33 @@
 
 <section class="space-y-4">
 	<h2 class="text-2xl font-bold tracking-tight">Notizen</h2>
+
+	<!-- Schnellnotiz: optional direkt in ein Projekt -->
+	<div class="card space-y-2.5 p-4">
+		<textarea
+			bind:value={neueNotiz}
+			rows="2"
+			placeholder="Schnelle Notiz …"
+			class="field resize-none"
+		></textarea>
+		<div class="flex items-center justify-between gap-2">
+			<label class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-400">
+				<Icon name="folder" class="h-3.5 w-3.5 shrink-0" />
+				<select bind:value={neuProjektId} aria-label="Projekt für Notiz" class="field min-w-0 py-1">
+					<option value="">Kein Projekt</option>
+					{#each projektOptionen as o (o.id)}
+						<option value={o.id}>{o.label}</option>
+					{/each}
+				</select>
+			</label>
+			<button
+				type="button"
+				onclick={schnellnotiz}
+				disabled={!neueNotiz.trim()}
+				class="btn-primary shrink-0">Notiz anlegen</button
+			>
+		</div>
+	</div>
 
 	<div class="relative">
 		<Icon name="search" class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-zinc-500" />

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
 	import { addAppointment, upcomingAppointments, deleteAppointment } from '$lib/db/appointments';
+	import { pickerProjects, type ProjectOption } from '$lib/db/projects';
 	import Vorbereitung from '$lib/components/Vorbereitung.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { Appointment, Category } from '$lib/db/types';
@@ -25,11 +26,27 @@
 	});
 	const kategorien: Category[] = ['privat', 'geschaeftlich', 'offen'];
 
+	// Auswahlbare Projekte (nur Blätter, mit Pfad) für die optionale Zuordnung.
+	let projektOptionen = $state<ProjectOption[]>([]);
+	$effect(() => {
+		const sub = liveQuery(() => pickerProjects()).subscribe((v) => (projektOptionen = v));
+		return () => sub.unsubscribe();
+	});
+	let projektId = $state(''); // '' = kein Projekt
+
 	async function anlegen() {
 		const t = titel.trim();
 		const ms = wann ? new Date(wann).getTime() : NaN;
 		if (!t || Number.isNaN(ms)) return;
-		await addAppointment({ title: t, startAt: ms, location: ort, category: kategorie });
+		// Mit Projekt folgt die Kategorie dem Projekt, sonst die manuelle Auswahl.
+		const proj = projektOptionen.find((p) => p.id === projektId);
+		await addAppointment({
+			title: t,
+			startAt: ms,
+			location: ort,
+			category: proj?.category ?? kategorie,
+			projectId: proj?.id
+		});
 		titel = '';
 		wann = '';
 		ort = '';
@@ -56,19 +73,32 @@
 			<input bind:value={wann} type="datetime-local" class="field" />
 		</label>
 		<input bind:value={ort} placeholder="Ort (optional)" class="field" />
-		<div class="flex items-center justify-between gap-2">
-			<div class="flex gap-1" role="group" aria-label="Termin-Kategorie wählen">
-				{#each kategorien as k (k)}
-					<button
-						type="button"
-						onclick={() => (kategorie = k)}
-						aria-pressed={kategorie === k}
-						class="chip px-2.5 {kategorie === k ? categoryChipActive[k] : 'chip-idle'}"
-					>
-						{categoryLabel[k]}
-					</button>
+		<label class="flex items-center gap-1.5 text-xs text-zinc-400">
+			<Icon name="folder" class="h-3.5 w-3.5 shrink-0" />
+			<select bind:value={projektId} aria-label="Projekt für Termin" class="field min-w-0 py-1">
+				<option value="">Kein Projekt</option>
+				{#each projektOptionen as o (o.id)}
+					<option value={o.id}>{o.label}</option>
 				{/each}
-			</div>
+			</select>
+		</label>
+		<div class="flex items-center justify-between gap-2">
+			{#if projektId}
+				<span class="text-xs text-zinc-500">Kategorie folgt dem Projekt</span>
+			{:else}
+				<div class="flex gap-1" role="group" aria-label="Termin-Kategorie wählen">
+					{#each kategorien as k (k)}
+						<button
+							type="button"
+							onclick={() => (kategorie = k)}
+							aria-pressed={kategorie === k}
+							class="chip px-2.5 {kategorie === k ? categoryChipActive[k] : 'chip-idle'}"
+						>
+							{categoryLabel[k]}
+						</button>
+					{/each}
+				</div>
+			{/if}
 			<button
 				type="button"
 				onclick={anlegen}

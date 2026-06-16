@@ -8,7 +8,7 @@ import type { SyncMeta } from './types';
 // damit Löschungen den Umzug überleben.
 
 export const BACKUP_APP = 'alltags-helfer';
-export const BACKUP_SCHEMA = 3; // entspricht der Dexie-Schema-Version
+export const BACKUP_SCHEMA = 4; // entspricht der Dexie-Schema-Version
 
 const TABLES = [
 	'notes',
