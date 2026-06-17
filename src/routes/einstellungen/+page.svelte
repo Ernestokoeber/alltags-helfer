@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { exportBackup, importBackup, type ImportResult } from '$lib/db/backup';
 	import Icon from '$lib/components/Icon.svelte';
+	import { syncState } from '$lib/sync-state.svelte';
+	import { loadConfig, saveConfig, isConfigured } from '$lib/sync';
 
 	// Export: Sicherung als JSON-Datei herunterladen.
 	async function exportieren() {
@@ -36,6 +38,27 @@
 						: 'Import fehlgeschlagen.';
 		}
 		if (dateiInput) dateiInput.value = ''; // gleiche Datei erneut wählbar
+	}
+
+	// --- Geräte-Sync ---
+	const cfg = loadConfig();
+	let syncCode = $state(cfg.code);
+	let e2eePass = $state(cfg.passphrase);
+	let eingerichtet = $state(isConfigured());
+
+	async function syncEinrichten() {
+		saveConfig({ code: syncCode, passphrase: e2eePass });
+		eingerichtet = isConfigured();
+		await syncState.trigger();
+	}
+
+	function syncZeit(ms: number): string {
+		return new Date(ms).toLocaleString('de-DE', {
+			day: '2-digit',
+			month: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 	}
 </script>
 
@@ -89,11 +112,74 @@
 		{/if}
 	</div>
 
-	<div class="card p-4">
+	<div class="card space-y-3 p-4">
 		<h3 class="text-sm font-medium text-zinc-300">Geräte-Sync</h3>
-		<p class="mt-2 text-xs leading-relaxed text-zinc-500">
-			Automatischer Abgleich zwischen Geräten kommt später über einen eigenen, self-hosted Server
-			(Phase 6 der Roadmap). Bis dahin ist Export → Import der Weg, Daten mitzunehmen.
+		<p class="text-xs leading-relaxed text-zinc-500">
+			Gleicht deine Daten <strong class="text-zinc-300">Ende-zu-Ende-verschlüsselt</strong> mit deinen
+			anderen Geräten ab (über deinen eigenen Cloudflare-Worker). Gib <strong class="text-zinc-300"
+				>Sync-Code</strong
+			>
+			und <strong class="text-zinc-300">E2EE-Passwort</strong> auf jedem Gerät identisch ein — das
+			Passwort verlässt dein Gerät nie und liegt auch nicht auf dem Server.
 		</p>
+
+		<label class="flex flex-col gap-1 text-xs text-zinc-400">
+			Sync-Code
+			<input
+				bind:value={syncCode}
+				type="password"
+				autocomplete="off"
+				placeholder="Sync-Code"
+				class="field"
+			/>
+		</label>
+		<label class="flex flex-col gap-1 text-xs text-zinc-400">
+			E2EE-Passwort (auf allen Geräten gleich)
+			<input
+				bind:value={e2eePass}
+				type="password"
+				autocomplete="off"
+				placeholder="E2EE-Passwort"
+				class="field"
+			/>
+		</label>
+
+		<div class="flex flex-wrap items-center gap-2">
+			<button
+				type="button"
+				onclick={syncEinrichten}
+				disabled={!syncCode.trim() || !e2eePass || syncState.status === 'running'}
+				class="btn-primary">Speichern &amp; synchronisieren</button
+			>
+			<button
+				type="button"
+				onclick={() => syncState.trigger()}
+				disabled={!eingerichtet || syncState.status === 'running'}
+				class="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-zinc-200 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
+			>
+				<Icon name="layers" class="h-4 w-4" /> Jetzt synchronisieren
+			</button>
+		</div>
+
+		{#if syncState.status === 'running'}
+			<p class="text-xs text-zinc-400">Synchronisiere …</p>
+		{:else if syncState.status === 'ok'}
+			<p
+				role="status"
+				class="rounded-xl border border-teal-400/25 bg-teal-400/10 px-3 py-2 text-xs text-teal-200"
+			>
+				Sync erfolgreich: {syncState.message}{#if syncState.lastAt}
+					· {syncZeit(syncState.lastAt)}{/if}
+			</p>
+		{:else if syncState.status === 'error'}
+			<p
+				role="alert"
+				class="rounded-xl border border-rose-400/25 bg-rose-400/10 px-3 py-2 text-xs text-rose-200"
+			>
+				{syncState.message}
+			</p>
+		{:else if syncState.lastAt}
+			<p class="text-xs text-zinc-500">Zuletzt synchronisiert: {syncZeit(syncState.lastAt)}</p>
+		{/if}
 	</div>
 </section>

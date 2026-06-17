@@ -11,6 +11,7 @@
 	import PanelAufgaben from '$lib/components/PanelAufgaben.svelte';
 	import PanelTermine from '$lib/components/PanelTermine.svelte';
 	import PanelNotizen from '$lib/components/PanelNotizen.svelte';
+	import { syncState } from '$lib/sync-state.svelte';
 
 	let { children } = $props();
 
@@ -21,6 +22,21 @@
 	$effect(() => {
 		persistStorage();
 		probeIndexedDB().then((ok) => (dbBlockiert = !ok));
+	});
+
+	// Auto-Sync: bei App-Start, beim Zurückkehren in den Vordergrund und alle 2 Min.
+	// trigger() ist ein No-op, solange der Sync nicht eingerichtet ist.
+	$effect(() => {
+		syncState.trigger();
+		const onVisible = () => {
+			if (document.visibilityState === 'visible') syncState.trigger();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+		const id = setInterval(() => syncState.trigger(), 120_000);
+		return () => {
+			document.removeEventListener('visibilitychange', onVisible);
+			clearInterval(id);
+		};
 	});
 
 	const nav: { href: string; label: string; icon: IconName }[] = [

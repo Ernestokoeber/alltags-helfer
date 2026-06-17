@@ -1,0 +1,16 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "alltags-helfer-sync",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-01",
+	"observability": { "enabled": true },
+	// D1-Binding: die database_id trägt `wrangler d1 create alltags-helfer` ein
+	// (bzw. aus dem Dashboard kopieren). Bis dahin Platzhalter.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "alltags-helfer",
+			"database_id": "dbfa745f-1149-4a2b-b645-7cd5bea4760d"
+		}
+	]
+}

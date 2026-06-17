@@ -1,6 +1,6 @@
 # Alltags-Helfer — Projektplan
 
-> **Stand:** 2026-06-17 · **Owner:** Ernestokoeber · **Status:** P0–P5 umgesetzt & live auf GitHub Pages; Projekt-Hierarchie + Aufgaben + responsives Desktop-Layout ergänzt; P6 (Geräte-Sync) in Vorbereitung
+> **Stand:** 2026-06-17 · **Owner:** Ernestokoeber · **Status:** P0–P5 umgesetzt & live auf GitHub Pages; Projekt-Hierarchie + Aufgaben + responsives Desktop-Layout ergänzt; **Geräte-Sync (E2EE) umgesetzt** — Worker live, App-Client fertig (End-to-End-Test ausstehend, s. `SYNC-PLAN.md`)
 
 Ein **local-first Second-Brain & Daily-Planner**: Notizen (Text + Sprache), Termine
 mit Vorbereitung & Erinnerung, Bucketlist, Schlaf-Tracking und ein sanftes
@@ -29,7 +29,8 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 - **Bucketlist:** anlegen mit **Beschreibung, Zieldatum und Kategorie** (Chips), erledigt umschalten, **Erledigte ein-/ausblenden**, löschen.
 - **Schlaf:** Eintrag (Datum/Zeiten/Qualität/Notiz), **Dauer-Berechnung** (auch über Mitternacht), letzte Nächte, **Wochenschnitt** (Ø der letzten 7 Nächte) und **Bearbeiten** (Eintrag ins Formular laden, Upsert ersetzt ihn).
 - **Auto-Kategorie:** lokaler Stichwort-Klassifizierer (`src/lib/classify.ts`, **kein Cloud**) schlägt für „offen"-Notizen Privat/Geschäftlich vor, Übernahme per Klick. *Gemini bewusst verworfen (Datenschutz).*
-- **Qualität:** **103 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik, Backup/Projekte (inkl. Hierarchie & Aufgaben), `openTasks`, `tagesgruss`/`wmoToWetter` und UI-Komponenten inkl. Dashboard-Panels & `Wetter` (`@testing-library/svelte` + happy-dom; Select-Bindungen unter **jsdom**, da happy-dom den `:checked`-Selektor für `<option>` nicht unterstützt).
+- **Geräte-Sync (E2EE, Handy ⇄ PC):** App bleibt auf GitHub Pages, Sync additiv über einen eigenen **Cloudflare Worker + D1** (`sync-worker/`, live unter `alltags-helfer-sync.ekoeber.workers.dev`). Ein `POST /sync` macht Pull+Push mit **Last-Write-Wins** (`updatedAt`); Zugriff per **Sync-Code** (Bearer). **Ende-zu-Ende-verschlüsselt:** PBKDF2 (310k) → AES-GCM im Client (`crypto.ts`), der Server speichert nur Chiffrat; Metadaten (id/collection/updatedAt/deleted) bleiben für den Merge Klartext. Client in `sync.ts`/`sync-state.svelte.ts`, UI in „Einstellungen" (Sync-Code + E2EE-Passwort), Auto-Sync (Start/Vordergrund/2-Min/Button). Details + Betrieb in `SYNC-PLAN.md`.
+- **Qualität:** **112 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik, Backup/Projekte (inkl. Hierarchie & Aufgaben), `openTasks`, `tagesgruss`/`wmoToWetter`, **E2EE-Krypto & Sync-LWW** und UI-Komponenten inkl. Dashboard-Panels & `Wetter` (`@testing-library/svelte` + happy-dom; Select-Bindungen unter **jsdom**, da happy-dom den `:checked`-Selektor für `<option>` nicht unterstützt).
 - **Dev/Git:** Multipass-VM `alltagshelfer-dev`, `scripts/vm-dev.sh`; Arbeit direkt auf `main`.
 
 **Noch offen:** echter iPhone-Test über HTTPS (Cloudflare Tunnel) — On-Device-Verifikation des Service Workers/Offline; „Heute"-Tipp (Entschleunigen); Erinnerungen (lokale Notifications); Spracheingabe (Diktat); optional automatischer E2E-Smoke (Playwright); Push + Geräte-Sync (P6).
