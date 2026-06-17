@@ -34,6 +34,12 @@ export async function upcomingAppointments(from: number = Date.now()): Promise<A
 	return arr.filter((t) => t.deletedAt === null).sort((a, b) => a.startAt - b.startAt);
 }
 
+// Alle aktiven Termine (auch vergangene), neueste zuerst — für die globale Suche.
+export async function allAppointments(): Promise<Appointment[]> {
+	const arr = await db.appointments.toArray();
+	return arr.filter((t) => t.deletedAt === null).sort((a, b) => b.startAt - a.startAt);
+}
+
 export async function deleteAppointment(id: string): Promise<void> {
 	const now = Date.now();
 	await db.appointments.update(id, { deletedAt: now, updatedAt: now });

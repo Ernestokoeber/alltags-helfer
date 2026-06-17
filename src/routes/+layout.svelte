@@ -18,8 +18,18 @@
 	import { faelligeErinnerungen } from '$lib/reminders';
 	import { filterBySphere } from '$lib/sphere';
 	import type { Note, Appointment } from '$lib/db/types';
+	import Suche from '$lib/components/Suche.svelte';
 
 	let { children } = $props();
+
+	// Globales Such-Overlay (Strg/⌘+K oder die Such-Buttons).
+	let sucheOffen = $state(false);
+	function tastatur(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+			e.preventDefault();
+			sucheOffen = true;
+		}
+	}
 
 	// Beim Start (nur Client): persistenten Speicher anfordern und prüfen, ob
 	// IndexedDB nutzbar ist. Ist es blockiert (z. B. privater Browser-Modus),
@@ -103,6 +113,8 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<svelte:window onkeydown={tastatur} />
+
 <div
 	class="relative flex min-h-dvh flex-col overflow-x-clip bg-zinc-950 text-zinc-100 antialiased lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]"
 >
@@ -160,6 +172,17 @@
 					</button>
 				{/each}
 			</div>
+
+			<!-- Suche -->
+			<button
+				type="button"
+				onclick={() => (sucheOffen = true)}
+				class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+			>
+				<Icon name="search" class="h-4 w-4" />
+				<span>Suchen</span>
+				<kbd class="ml-auto rounded border border-white/10 px-1.5 text-[10px] text-zinc-500">⌘K</kbd>
+			</button>
 
 			<!-- Vertikale Navigation -->
 			<nav class="flex flex-col gap-1" aria-label="Hauptnavigation">
@@ -245,6 +268,14 @@
 						{/each}
 					</div>
 
+					<button
+						type="button"
+						onclick={() => (sucheOffen = true)}
+						aria-label="Suchen"
+						class="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-zinc-500 backdrop-blur-xl transition-colors hover:text-zinc-200"
+					>
+						<Icon name="search" class="h-4 w-4" />
+					</button>
 					<a
 						href="{base}/einstellungen"
 						aria-label="Einstellungen"
@@ -320,3 +351,7 @@
 		</nav>
 	</div>
 </div>
+
+{#if sucheOffen}
+	<Suche onClose={() => (sucheOffen = false)} />
+{/if}
