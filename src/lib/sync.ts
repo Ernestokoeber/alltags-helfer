@@ -137,8 +137,10 @@ export function loadConfig(): SyncConfig {
 // Speichert Zugangsdaten. Bei (Neu-)Einrichtung Cursor + Salt zurücksetzen, damit
 // mit den neuen Daten ein sauberer Voll-Sync läuft.
 export function saveConfig(cfg: SyncConfig): void {
+	// Beide getrimmt: versehentliche Leerzeichen (v. a. Handy-Tastaturen) würden
+	// sonst zu einem anderen Schlüssel und damit zu „falschem Passwort" führen.
 	lsSet(LS.code, cfg.code.trim());
-	lsSet(LS.pass, cfg.passphrase);
+	lsSet(LS.pass, cfg.passphrase.trim());
 	lsDel(LS.salt);
 	lsDel(LS.pull);
 	lsDel(LS.push);

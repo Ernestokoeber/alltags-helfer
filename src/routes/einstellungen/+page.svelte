@@ -45,6 +45,7 @@
 	let syncCode = $state(cfg.code);
 	let e2eePass = $state(cfg.passphrase);
 	let eingerichtet = $state(isConfigured());
+	let zeigePass = $state(false);
 
 	async function syncEinrichten() {
 		saveConfig({ code: syncCode, passphrase: e2eePass });
@@ -129,20 +130,35 @@
 				bind:value={syncCode}
 				type="password"
 				autocomplete="off"
+				autocapitalize="none"
+				autocorrect="off"
+				spellcheck="false"
 				placeholder="Sync-Code"
 				class="field"
 			/>
 		</label>
-		<label class="flex flex-col gap-1 text-xs text-zinc-400">
-			E2EE-Passwort (auf allen Geräten gleich)
+		<div class="flex flex-col gap-1 text-xs text-zinc-400">
+			<div class="flex items-center justify-between">
+				<span>E2EE-Passwort (auf allen Geräten gleich)</span>
+				<button
+					type="button"
+					onclick={() => (zeigePass = !zeigePass)}
+					class="text-zinc-500 transition-colors hover:text-zinc-300"
+				>
+					{zeigePass ? 'verbergen' : 'anzeigen'}
+				</button>
+			</div>
 			<input
 				bind:value={e2eePass}
-				type="password"
+				type={zeigePass ? 'text' : 'password'}
 				autocomplete="off"
+				autocapitalize="none"
+				autocorrect="off"
+				spellcheck="false"
 				placeholder="E2EE-Passwort"
 				class="field"
 			/>
-		</label>
+		</div>
 
 		<div class="flex flex-wrap items-center gap-2">
 			<button
