@@ -3,7 +3,7 @@
 	import { addNote, softDeleteNote, notesForDay } from '$lib/db/notes';
 	import { recentSleep, sleepDuration } from '$lib/db/sleep';
 	import { upcomingAppointments } from '$lib/db/appointments';
-	import { relativeDayLabel } from '$lib/format';
+	import { relativeDayLabel, tagesgruss } from '$lib/format';
 	import type { Appointment, Category, Note, SleepEntry } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
@@ -12,15 +12,20 @@
 	import PanelAufgaben from '$lib/components/PanelAufgaben.svelte';
 	import PanelTermine from '$lib/components/PanelTermine.svelte';
 	import PanelNotizen from '$lib/components/PanelNotizen.svelte';
+	import Wetter from '$lib/components/Wetter.svelte';
 
-	const heute = new Date();
-	const datum = heute.toLocaleDateString('de-DE', {
-		weekday: 'long',
-		day: 'numeric',
-		month: 'long'
+	// Aktuelle Zeit, regelmäßig aktualisiert → Begrüßung und Uhr bleiben aktuell,
+	// auch wenn die App über eine Band-/Tagesgrenze hinaus offen bleibt.
+	let now = $state(new Date());
+	$effect(() => {
+		const id = setInterval(() => (now = new Date()), 30_000);
+		return () => clearInterval(id);
 	});
-	const stunde = heute.getHours();
-	const gruss = stunde < 11 ? 'Guten Morgen' : stunde < 18 ? 'Guten Tag' : 'Guten Abend';
+	const datum = $derived(
+		now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
+	);
+	const gruss = $derived(tagesgruss(now));
+	const uhr = $derived(now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
 
 	// Live-Daten fürs Briefing
 	let notizenAlle = $state<Note[]>([]);
@@ -75,13 +80,19 @@
 </script>
 
 <section class="space-y-5">
-	<div>
-		<p class="text-sm text-zinc-500">{datum}</p>
-		<h2
-			class="bg-gradient-to-r from-amber-200 via-zinc-50 to-sky-200 bg-clip-text text-3xl font-bold tracking-tight text-transparent"
-		>
-			{gruss}.
-		</h2>
+	<div class="flex items-start justify-between gap-4">
+		<div class="min-w-0">
+			<p class="text-sm text-zinc-500">{datum}</p>
+			<h2
+				class="bg-gradient-to-r from-amber-200 via-zinc-50 to-sky-200 bg-clip-text text-3xl font-bold tracking-tight text-transparent"
+			>
+				{gruss}
+			</h2>
+		</div>
+		<div class="shrink-0 text-right">
+			<p class="text-2xl font-semibold tabular-nums text-zinc-200">{uhr}</p>
+			<Wetter />
+		</div>
 	</div>
 
 	<!-- Ab lg: zweispaltig — Tagesbereich (2/3) + Überblick-Panels (1/3). -->
