@@ -109,7 +109,7 @@
 	<h2 class="text-2xl font-bold tracking-tight">Notizen</h2>
 
 	<!-- Schnellnotiz: optional direkt in ein Projekt -->
-	<div class="card space-y-2.5 p-4">
+	<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 		<textarea
 			bind:value={neueNotiz}
 			rows="2"
@@ -127,7 +127,7 @@
 		</div>
 	</div>
 
-	<div class="relative">
+	<div class="relative lg:max-w-2xl">
 		<Icon name="search" class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-zinc-500" />
 		<input
 			bind:value={suche}
@@ -158,7 +158,7 @@
 		</p>
 	{/if}
 
-	<div class="space-y-2">
+	<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
 		{#each gefiltert as n (n.id)}
 			<div class="card p-3.5 {n.pinned ? 'border-amber-400/30' : ''}">
 				{#if editId === n.id}

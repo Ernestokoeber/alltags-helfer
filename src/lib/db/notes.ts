@@ -113,6 +113,17 @@ export function sortTasks(notes: Note[]): Note[] {
 	});
 }
 
+// Offene Aufgaben projektübergreifend: Notizen mit Projektbezug oder Frist,
+// die noch nicht erledigt sind — für den Desktop-Überblick. Sortiert wie
+// Aufgaben (überfällige/früheste Frist zuerst, dann fristlose nach Alter).
+export async function openTasks(): Promise<Note[]> {
+	const arr = await db.notes.toArray();
+	const tasks = arr.filter(
+		(n) => n.deletedAt === null && isOpen(n) && (n.projectId != null || n.dueAt != null)
+	);
+	return sortTasks(tasks);
+}
+
 // Tag hinzufügen (kleingeschrieben, dedupliziert).
 export async function addTag(id: string, tag: string): Promise<void> {
 	const t = tag.trim().toLowerCase();

@@ -13,7 +13,8 @@ import {
 	setNoteDue,
 	setNoteCompleted,
 	isOpen,
-	sortTasks
+	sortTasks,
+	openTasks
 } from './notes';
 
 beforeEach(async () => {
@@ -142,5 +143,24 @@ describe('Notizen als Aufgaben (Frist & Erledigt)', () => {
 
 		const sortiert = sortTasks([erledigt, ohneFrist, fristSpaet, erledigtNeuer, fristFrueh]);
 		expect(sortiert.map((n) => n.id)).toEqual(['frueh', 'spaet', 'ohne', 'done2', 'done']);
+	});
+
+	it('openTasks: nur offene Aufgaben (Projekt oder Frist), sortiert, ohne erledigte/gelöschte', async () => {
+		const base = Date.now();
+		await addNote({ content: 'Projektaufgabe', projectId: 'p1' }); // fristlos, aber Projekt
+		await addNote({ content: 'Frist früh', dueAt: base + 1000 });
+		await addNote({ content: 'Frist spät', dueAt: base + 5000 });
+		await addNote({ content: 'lose Notiz' }); // kein Projekt, keine Frist -> keine Aufgabe
+		const erledigt = await addNote({ content: 'erledigt', projectId: 'p1' });
+		await setNoteCompleted(erledigt.id, true);
+		const geloescht = await addNote({ content: 'gelöscht', dueAt: base + 2000 });
+		await db.notes.update(geloescht.id, { deletedAt: Date.now() });
+
+		const inhalte = (await openTasks()).map((n) => n.content);
+		// Fristen aufsteigend zuerst, dann fristlose Projektaufgabe.
+		expect(inhalte).toEqual(['Frist früh', 'Frist spät', 'Projektaufgabe']);
+		expect(inhalte).not.toContain('lose Notiz');
+		expect(inhalte).not.toContain('erledigt');
+		expect(inhalte).not.toContain('gelöscht');
 	});
 });

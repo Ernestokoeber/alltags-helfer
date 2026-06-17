@@ -261,14 +261,16 @@
 		{#if hatKinder || kinder.length > 0}
 			<div class="space-y-2">
 				<h3 class="px-1 text-sm font-medium text-zinc-300">Unterprojekte</h3>
-				{#each kinder as p (p.id)}
-					{@render projektZeile(p)}
-				{/each}
+				<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+					{#each kinder as p (p.id)}
+						{@render projektZeile(p)}
+					{/each}
+				</div>
 			</div>
 		{/if}
 
 		{#if darfUnterprojekt}
-			<div class="card space-y-2.5 p-4">
+			<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 				<h3 class="flex items-center gap-2 text-sm font-medium text-zinc-300">
 					<Icon name="folder" class="h-4 w-4 text-zinc-500" /> Unterprojekt anlegen
 				</h3>
@@ -295,7 +297,7 @@
 		<!-- Arbeitsbereich: Aufgaben + Termine (nur im Blatt) -->
 		{#if darfInhalte}
 			<!-- Aufgabe anlegen -->
-			<div class="card space-y-2.5 p-4">
+			<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 				<h3 class="flex items-center gap-2 text-sm font-medium text-zinc-300">
 					<Icon name="check" class="h-4 w-4 text-zinc-500" /> Aufgabe
 				</h3>
@@ -325,13 +327,13 @@
 			</div>
 
 			<!-- Aufgabenliste -->
-			<div class="space-y-2">
-				<h3 class="px-1 text-sm font-medium text-zinc-300">
-					Aufgaben {#if aufgaben.length > 0}({aufgaben.length}){/if}
-				</h3>
-				{#if aufgaben.length === 0}
-					<p class="px-1 text-sm text-zinc-500">Noch keine Aufgaben in diesem Projekt.</p>
-				{/if}
+			<h3 class="px-1 text-sm font-medium text-zinc-300">
+				Aufgaben {#if aufgaben.length > 0}({aufgaben.length}){/if}
+			</h3>
+			{#if aufgaben.length === 0}
+				<p class="px-1 text-sm text-zinc-500">Noch keine Aufgaben in diesem Projekt.</p>
+			{/if}
+			<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
 				{#each aufgaben as n (n.id)}
 					<div class="card p-3.5 {isOpen(n) ? '' : 'opacity-60'}">
 						<div class="flex items-start gap-3">
@@ -389,7 +391,7 @@
 			</div>
 
 			<!-- Termin anlegen -->
-			<div class="card space-y-2.5 p-4">
+			<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 				<h3 class="flex items-center gap-2 text-sm font-medium text-zinc-300">
 					<Icon name="calendar" class="h-4 w-4 text-zinc-500" /> Termin
 				</h3>
@@ -411,8 +413,8 @@
 
 			<!-- Terminliste -->
 			{#if projektTermine.length > 0}
-				<div class="space-y-2">
-					<h3 class="px-1 text-sm font-medium text-zinc-300">Termine ({projektTermine.length})</h3>
+				<h3 class="px-1 text-sm font-medium text-zinc-300">Termine ({projektTermine.length})</h3>
+				<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
 					{#each projektTermine as t (t.id)}
 						<div class="card p-3.5">
 							<div class="flex items-start justify-between gap-3">
@@ -445,7 +447,7 @@
 		<!-- Oberste Ebene: Wurzelprojekte -->
 		<h2 class="text-2xl font-bold tracking-tight">Projekte</h2>
 
-		<div class="card space-y-2.5 p-4">
+		<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 			<input
 				bind:value={name}
 				placeholder="Projektname"
@@ -480,7 +482,7 @@
 			</p>
 		{/if}
 
-		<div class="space-y-2">
+		<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
 			{#each kinder as p (p.id)}
 				{@render projektZeile(p)}
 			{/each}

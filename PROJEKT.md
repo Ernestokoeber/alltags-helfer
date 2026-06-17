@@ -1,6 +1,6 @@
 # Alltags-Helfer — Projektplan
 
-> **Stand:** 2026-06-16 · **Owner:** Ernestokoeber · **Status:** P0–P5 umgesetzt & live auf GitHub Pages; Projekt-Hierarchie + Aufgaben ergänzt; P6 (Geräte-Sync) in Vorbereitung
+> **Stand:** 2026-06-17 · **Owner:** Ernestokoeber · **Status:** P0–P5 umgesetzt & live auf GitHub Pages; Projekt-Hierarchie + Aufgaben + responsives Desktop-Layout ergänzt; P6 (Geräte-Sync) in Vorbereitung
 
 Ein **local-first Second-Brain & Daily-Planner**: Notizen (Text + Sprache), Termine
 mit Vorbereitung & Erinnerung, Bucketlist, Schlaf-Tracking und ein sanftes
@@ -12,7 +12,7 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 
 ---
 
-## Umgesetzt (Stand: 2026-06-16)
+## Umgesetzt (Stand: 2026-06-17)
 
 > Wird bei jedem Feature-Commit mitgepflegt.
 
@@ -20,6 +20,7 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 - **Datensicherung (Export/Import):** Seite „Einstellungen" (Zahnrad im Header): alle Daten als JSON-Datei exportieren und auf einem anderen Gerät importieren — Merge per **Last-Write-Wins** über `updatedAt` (gleiche Konfliktregel wie der spätere P6-Sync), Tombstones inklusive, v1/v2-Sicherungen werden beim Import migriert. Überbrückt den fehlenden Geräte-Sync.
 - **Sphären-Sicht (Privat ⇄ Arbeit):** globaler Umschalter im Header (Privat / Alles / Arbeit, in localStorage gemerkt) filtert Notizen, Termine, Bucketlist und das Heute-Briefing. „Offene" Einträge erscheinen in jeder Sphäre. Reine Logik in `src/lib/sphere.ts` (getestet), Zustand in `src/lib/sphere-state.svelte.ts`. **Termine haben dafür eine Kategorie bekommen** (Dexie-Migration v2, Bestand → `offen`). UI-Label für `geschaeftlich` ist jetzt „Arbeit".
 - **Design „Zwei Sphären":** dunkles Premium-Theme (zinc-950) mit Glas-Karten, Farbwelten Privat = Amber / Arbeit = Himmelblau (als weiche Hintergrund-Flächen, Badges und Chips), schwebende Glas-Navigation, Outfit-Schrift (selbst gehostet via `@fontsource-variable/outfit`, offline-fähig), Inline-SVG-Icons (`src/lib/components/Icon.svelte`) statt Emojis, neues App-Icon/Favicon (zwei verschmelzende Sphären, `scripts/gen-icons.mjs`). Wiederkehrende Bausteine (`card`, `field`, `btn-primary`, `chip`) in `src/app.css`.
+- **Responsives Desktop-Layout:** Ab `lg` (≥ 1024 px) feste **Seitenleiste links** (Logo, Sphären-Umschalter, vertikale Navigation, Einstellungen) statt der mobilen Bottom-Nav; Inhalt bis `max-w-6xl`, Listen mehrspaltig (`lg:grid-cols-2`, `xl:grid-cols-3`), Eingabe-Formulare auf `max-w-2xl` begrenzt. **„Heute" wird zum Dashboard** (2/3 Tagesbereich + 1/3 Überblick-Panels). Ab `xl` zusätzlich eine **Kontext-Spalte** auf den Listen-Seiten (auf „Termine" mit Notizen statt Termine, sonst Aufgaben + Termine). Drei wiederverwendbare Panels (`PanelAufgaben`/`PanelTermine`/`PanelNotizen`) zeigen offene/überfällige Aufgaben (projektübergreifend via neuer `openTasks()`-Abfrage), anstehende Termine und letzte/angepinnte Notizen. **Mobil unverändert** (Bottom-Nav, `max-w-md`, Safe-Area).
 - **Fundament:** SvelteKit 2 + Svelte 5 + TypeScript + Tailwind v4, `adapter-static` (SPA), local-first via IndexedDB/Dexie (sync-fähiges Schema, UUID/`updatedAt`/Tombstone).
 - **PWA-Kern (P0 abgeschlossen):** installierbar via Web-App-Manifest + Icons (Platzhalter, `scripts/gen-icons.mjs`), **offline-fähig** über eingebauten Service Worker (`src/service-worker.ts`, Precache + 200.html-Fallback, **kein Plugin** — Vite 8 deckt `@vite-pwa` noch nicht ab). `navigator.storage.persist()` gegen iOS-Verdrängung + DB-Health-Check mit Banner (blockierte IndexedDB, z. B. privater Modus).
 - **Heute:** Schnellnotiz mit Kategorie; Briefing (letzte Schlafnacht + nächste Termine).
@@ -28,7 +29,7 @@ schlägt sanft vor — die Entscheidung bleibt beim Nutzer.
 - **Bucketlist:** anlegen mit **Beschreibung, Zieldatum und Kategorie** (Chips), erledigt umschalten, **Erledigte ein-/ausblenden**, löschen.
 - **Schlaf:** Eintrag (Datum/Zeiten/Qualität/Notiz), **Dauer-Berechnung** (auch über Mitternacht), letzte Nächte, **Wochenschnitt** (Ø der letzten 7 Nächte) und **Bearbeiten** (Eintrag ins Formular laden, Upsert ersetzt ihn).
 - **Auto-Kategorie:** lokaler Stichwort-Klassifizierer (`src/lib/classify.ts`, **kein Cloud**) schlägt für „offen"-Notizen Privat/Geschäftlich vor, Übernahme per Klick. *Gemini bewusst verworfen (Datenschutz).*
-- **Qualität:** **95 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik, Backup/Projekte (inkl. Hierarchie & Aufgaben) und UI-Komponenten (`@testing-library/svelte` + happy-dom; Select-Bindungen unter **jsdom**, da happy-dom den `:checked`-Selektor für `<option>` nicht unterstützt).
+- **Qualität:** **99 Tests grün** — Datenschicht (vitest + fake-indexeddb), Sphären-Logik, Backup/Projekte (inkl. Hierarchie & Aufgaben), `openTasks` und UI-Komponenten inkl. Dashboard-Panels (`@testing-library/svelte` + happy-dom; Select-Bindungen unter **jsdom**, da happy-dom den `:checked`-Selektor für `<option>` nicht unterstützt).
 - **Dev/Git:** Multipass-VM `alltagshelfer-dev`, `scripts/vm-dev.sh`; Arbeit direkt auf `main`.
 
 **Noch offen:** echter iPhone-Test über HTTPS (Cloudflare Tunnel) — On-Device-Verifikation des Service Workers/Offline; „Heute"-Tipp (Entschleunigen); Erinnerungen (lokale Notifications); Spracheingabe (Diktat); optional automatischer E2E-Smoke (Playwright); Push + Geräte-Sync (P6).

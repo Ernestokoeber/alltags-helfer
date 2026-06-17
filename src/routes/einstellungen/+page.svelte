@@ -39,7 +39,7 @@
 	}
 </script>
 
-<section class="space-y-4">
+<section class="space-y-4 lg:mx-auto lg:max-w-3xl">
 	<h2 class="text-2xl font-bold tracking-tight">Einstellungen</h2>
 
 	<div class="card space-y-3 p-4">

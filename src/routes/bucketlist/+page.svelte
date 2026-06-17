@@ -57,7 +57,7 @@
 <section class="space-y-4">
 	<h2 class="text-2xl font-bold tracking-tight">Bucketlist</h2>
 
-	<div class="card space-y-2.5 p-4">
+	<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 		<input
 			bind:value={titel}
 			placeholder="Was möchtest du erleben?"
@@ -115,45 +115,47 @@
 		{#if sichtbar.length === 0}
 			<p class="px-1 text-sm text-zinc-500">Noch nichts auf deiner Liste.</p>
 		{/if}
-		{#each sichtbar as b (b.id)}
-			<div class="card flex items-start gap-3 p-3.5 {b.done ? 'opacity-60' : ''}">
-				<button
-					type="button"
-					onclick={() => toggleBucketDone(b.id, !b.done)}
-					aria-label="Erledigt umschalten"
-					class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors {b.done
-						? 'border-teal-400 bg-teal-400 text-zinc-950'
-						: 'border-zinc-600 text-transparent hover:border-zinc-400'}"
-				>
-					<Icon name="check" class="h-3 w-3" />
-				</button>
-				<div class="min-w-0 flex-1">
-					<p class="text-sm {b.done ? 'text-zinc-500 line-through' : 'text-zinc-100'}">
-						{b.title}
-					</p>
-					{#if b.description}
-						<p class="mt-0.5 text-xs whitespace-pre-wrap text-zinc-400">{b.description}</p>
-					{/if}
-					<div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-						<span class="chip px-2 py-0.5 {categoryBadge[b.category]}"
-							>{categoryLabel[b.category]}</span
-						>
-						{#if b.targetDate}
-							<span class="flex items-center gap-1 text-zinc-500">
-								<Icon name="flag" class="h-3.5 w-3.5" /> bis {fmtDatum(b.targetDate)}
-							</span>
+		<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+			{#each sichtbar as b (b.id)}
+				<div class="card flex items-start gap-3 p-3.5 {b.done ? 'opacity-60' : ''}">
+					<button
+						type="button"
+						onclick={() => toggleBucketDone(b.id, !b.done)}
+						aria-label="Erledigt umschalten"
+						class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors {b.done
+							? 'border-teal-400 bg-teal-400 text-zinc-950'
+							: 'border-zinc-600 text-transparent hover:border-zinc-400'}"
+					>
+						<Icon name="check" class="h-3 w-3" />
+					</button>
+					<div class="min-w-0 flex-1">
+						<p class="text-sm {b.done ? 'text-zinc-500 line-through' : 'text-zinc-100'}">
+							{b.title}
+						</p>
+						{#if b.description}
+							<p class="mt-0.5 text-xs whitespace-pre-wrap text-zinc-400">{b.description}</p>
 						{/if}
+						<div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+							<span class="chip px-2 py-0.5 {categoryBadge[b.category]}"
+								>{categoryLabel[b.category]}</span
+							>
+							{#if b.targetDate}
+								<span class="flex items-center gap-1 text-zinc-500">
+									<Icon name="flag" class="h-3.5 w-3.5" /> bis {fmtDatum(b.targetDate)}
+								</span>
+							{/if}
+						</div>
 					</div>
+					<button
+						type="button"
+						onclick={() => deleteBucketItem(b.id)}
+						aria-label="Löschen"
+						class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
+					>
+						<Icon name="x" class="h-4 w-4" />
+					</button>
 				</div>
-				<button
-					type="button"
-					onclick={() => deleteBucketItem(b.id)}
-					aria-label="Löschen"
-					class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
-				>
-					<Icon name="x" class="h-4 w-4" />
-				</button>
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </section>

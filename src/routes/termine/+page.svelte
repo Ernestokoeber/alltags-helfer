@@ -67,7 +67,7 @@
 <section class="space-y-4">
 	<h2 class="text-2xl font-bold tracking-tight">Termine</h2>
 
-	<div class="card space-y-2.5 p-4">
+	<div class="card space-y-2.5 p-4 lg:max-w-2xl">
 		<input bind:value={titel} placeholder="Titel" class="field" />
 		<label class="flex flex-col gap-1 text-xs text-zinc-400">
 			Wann
@@ -108,36 +108,38 @@
 		{#if liste.length === 0}
 			<p class="px-1 text-sm text-zinc-500">Keine anstehenden Termine in dieser Sicht.</p>
 		{/if}
-		{#each liste as t (t.id)}
-			<div class="card p-3.5">
-				<div class="flex items-start justify-between gap-3">
-					<div class="min-w-0">
-						<div class="flex items-center gap-2">
-							<p class="truncate text-sm font-medium text-zinc-100">{t.title}</p>
-							<span class="chip shrink-0 px-2 py-0.5 {categoryBadge[t.category]}"
-								>{categoryLabel[t.category]}</span
-							>
+		<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+			{#each liste as t (t.id)}
+				<div class="card p-3.5">
+					<div class="flex items-start justify-between gap-3">
+						<div class="min-w-0">
+							<div class="flex items-center gap-2">
+								<p class="truncate text-sm font-medium text-zinc-100">{t.title}</p>
+								<span class="chip shrink-0 px-2 py-0.5 {categoryBadge[t.category]}"
+									>{categoryLabel[t.category]}</span
+								>
+							</div>
+							<p class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+								<Icon name="clock" class="h-3.5 w-3.5" />
+								{fmt(t.startAt)}
+								{#if t.location}
+									<Icon name="mapPin" class="ml-1 h-3.5 w-3.5" />
+									{t.location}
+								{/if}
+							</p>
 						</div>
-						<p class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
-							<Icon name="clock" class="h-3.5 w-3.5" />
-							{fmt(t.startAt)}
-							{#if t.location}
-								<Icon name="mapPin" class="ml-1 h-3.5 w-3.5" />
-								{t.location}
-							{/if}
-						</p>
+						<button
+							type="button"
+							onclick={() => deleteAppointment(t.id)}
+							aria-label="Löschen"
+							class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
+						>
+							<Icon name="x" class="h-4 w-4" />
+						</button>
 					</div>
-					<button
-						type="button"
-						onclick={() => deleteAppointment(t.id)}
-						aria-label="Löschen"
-						class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
-					>
-						<Icon name="x" class="h-4 w-4" />
-					</button>
+					<Vorbereitung appointmentId={t.id} />
 				</div>
-				<Vorbereitung appointmentId={t.id} />
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </section>

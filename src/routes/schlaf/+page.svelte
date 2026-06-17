@@ -72,7 +72,7 @@
 <section class="space-y-4">
 	<h2 class="text-2xl font-bold tracking-tight">Schlaf</h2>
 
-	<div class="card space-y-3 p-4">
+	<div class="card space-y-3 p-4 lg:max-w-2xl">
 		<label class="block text-xs text-zinc-400">
 			Datum
 			<input bind:value={datum} type="date" class="field mt-1" />
@@ -111,7 +111,7 @@
 
 	{#if schnitt !== null}
 		<div
-			class="card flex items-center justify-between border-indigo-400/20 bg-indigo-400/[0.07] p-4"
+			class="card flex items-center justify-between border-indigo-400/20 bg-indigo-400/[0.07] p-4 lg:max-w-2xl"
 		>
 			<span class="flex items-center gap-2 text-sm font-medium text-indigo-200">
 				<Icon name="moon" class="h-4 w-4" /> Wochenschnitt
@@ -125,41 +125,43 @@
 		{#if liste.length === 0}
 			<p class="px-1 text-sm text-zinc-500">Noch keine Einträge.</p>
 		{/if}
-		{#each liste as e (e.id)}
-			<div class="card flex items-center justify-between gap-3 p-3.5">
-				<div>
-					<p class="text-sm font-medium text-zinc-100">
-						{datumText(e.date)} · {dauerText(e.bedTime, e.wakeTime)}
-					</p>
-					<p class="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-						{e.bedTime}–{e.wakeTime}
-						<span class="flex gap-0.5 text-amber-300/80">
-							{#each Array(e.quality) as _, i (i)}
-								<Icon name="star" class="h-3 w-3" filled />
-							{/each}
-						</span>
-						{#if e.note}· {e.note}{/if}
-					</p>
+		<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+			{#each liste as e (e.id)}
+				<div class="card flex items-center justify-between gap-3 p-3.5">
+					<div>
+						<p class="text-sm font-medium text-zinc-100">
+							{datumText(e.date)} · {dauerText(e.bedTime, e.wakeTime)}
+						</p>
+						<p class="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
+							{e.bedTime}–{e.wakeTime}
+							<span class="flex gap-0.5 text-amber-300/80">
+								{#each Array(e.quality) as _, i (i)}
+									<Icon name="star" class="h-3 w-3" filled />
+								{/each}
+							</span>
+							{#if e.note}· {e.note}{/if}
+						</p>
+					</div>
+					<div class="flex shrink-0 gap-2 text-zinc-600">
+						<button
+							type="button"
+							onclick={() => bearbeiten(e)}
+							aria-label="Bearbeiten"
+							class="transition-colors hover:text-zinc-300"
+						>
+							<Icon name="pencil" class="h-4 w-4" />
+						</button>
+						<button
+							type="button"
+							onclick={() => deleteSleepEntry(e.id)}
+							aria-label="Löschen"
+							class="transition-colors hover:text-rose-400"
+						>
+							<Icon name="x" class="h-4 w-4" />
+						</button>
+					</div>
 				</div>
-				<div class="flex shrink-0 gap-2 text-zinc-600">
-					<button
-						type="button"
-						onclick={() => bearbeiten(e)}
-						aria-label="Bearbeiten"
-						class="transition-colors hover:text-zinc-300"
-					>
-						<Icon name="pencil" class="h-4 w-4" />
-					</button>
-					<button
-						type="button"
-						onclick={() => deleteSleepEntry(e.id)}
-						aria-label="Löschen"
-						class="transition-colors hover:text-rose-400"
-					>
-						<Icon name="x" class="h-4 w-4" />
-					</button>
-				</div>
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </section>
