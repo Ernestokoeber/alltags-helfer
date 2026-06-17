@@ -13,6 +13,7 @@
 	import { categoryLabel, categoryBadge } from '$lib/sphere';
 	import type { Category, Note } from '$lib/db/types';
 	import Icon from './Icon.svelte';
+	import Markdown from './Markdown.svelte';
 
 	let { note, projektName, onClose }: { note: Note; projektName?: string; onClose: () => void } =
 		$props();
@@ -147,7 +148,7 @@
 					<button type="button" onclick={speichern} class="btn-primary">Speichern</button>
 				</div>
 			{:else}
-				<p class="text-sm break-words whitespace-pre-wrap text-zinc-100">{note.content}</p>
+				<Markdown source={note.content} />
 			{/if}
 		</div>
 
