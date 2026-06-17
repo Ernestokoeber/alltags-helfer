@@ -73,3 +73,17 @@ describe('Notizen-Seite – Schnellnotiz mit Projekt', () => {
 		});
 	});
 });
+
+describe('Notizen-Seite – Notiz öffnen', () => {
+	it('öffnet die Notiz im Modal mit Bearbeiten-Umschalter', async () => {
+		await addNote({ content: 'Notiz zum Öffnen', category: 'offen' });
+
+		render(Page);
+
+		await waitFor(() => expect(screen.getByText('Notiz zum Öffnen')).toBeInTheDocument());
+		await fireEvent.click(screen.getByRole('button', { name: 'Notiz öffnen' }));
+
+		const dialog = await screen.findByRole('dialog');
+		expect(within(dialog).getByRole('button', { name: /Bearbeiten/ })).toBeInTheDocument();
+	});
+});

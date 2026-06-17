@@ -6,7 +6,6 @@
 		softDeleteNote,
 		setPinned,
 		setCategory,
-		updateNoteContent,
 		addTag,
 		removeTag
 	} from '$lib/db/notes';
@@ -17,7 +16,7 @@
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
 	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
-	import NotizInhalt from '$lib/components/NotizInhalt.svelte';
+	import NotizModal from '$lib/components/NotizModal.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
@@ -68,17 +67,10 @@
 		{ value: 'offen', label: 'Offen' }
 	];
 
-	// Bearbeiten-Modus
-	let editId = $state<string | null>(null);
-	let editText = $state('');
-	function startEdit(n: Note) {
-		editId = n.id;
-		editText = n.content;
-	}
-	async function saveEdit() {
-		if (editId && editText.trim()) await updateNoteContent(editId, editText);
-		editId = null;
-	}
+	// Geöffnete Notiz (Modal): bezogen aus der Live-Liste → spiegelt Änderungen und
+	// schließt automatisch, wenn die Notiz gelöscht wird.
+	let offeneId = $state<string | null>(null);
+	const offeneNotiz = $derived(offeneId ? (alle.find((n) => n.id === offeneId) ?? null) : null);
 
 	// Tag-Eingabe (pro Notiz aufklappbar)
 	let tagFor = $state<string | null>(null);
@@ -162,109 +154,104 @@
 	<div class="columns-1 gap-2 lg:columns-2 xl:columns-3">
 		{#each gefiltert as n (n.id)}
 			<div class="card mb-2 break-inside-avoid p-3.5 {n.pinned ? 'border-amber-400/30' : ''}">
-				{#if editId === n.id}
-					<textarea bind:value={editText} rows="2" class="field resize-none"></textarea>
-					<div class="mt-2 flex justify-end gap-2 text-sm">
+				<div class="flex items-start justify-between gap-2">
+					<button
+						type="button"
+						onclick={() => (offeneId = n.id)}
+						aria-label="Notiz öffnen"
+						class="-m-1 min-w-0 flex-1 rounded-lg p-1 text-left transition-colors hover:bg-white/[0.03]"
+					>
+						<span
+							class="block max-h-40 overflow-hidden text-sm break-words whitespace-pre-wrap text-zinc-100"
+						>
+							{n.content}
+						</span>
+					</button>
+					<div class="flex shrink-0 gap-2 text-zinc-600">
 						<button
 							type="button"
-							onclick={() => (editId = null)}
-							class="px-2 py-1 text-zinc-400 hover:text-zinc-200"
+							onclick={() => setPinned(n.id, !n.pinned)}
+							aria-label={n.pinned ? 'Pin entfernen' : 'Anpinnen'}
+							class="transition-colors {n.pinned ? 'text-amber-300' : 'hover:text-zinc-300'}"
 						>
-							Abbrechen
+							<Icon name="bookmark" class="h-4 w-4" filled={n.pinned} />
 						</button>
-						<button type="button" onclick={saveEdit} class="btn-primary px-3 py-1">
-							Speichern
-						</button>
-					</div>
-				{:else}
-					<div class="flex items-start justify-between gap-2">
-						<div class="min-w-0 flex-1"><NotizInhalt content={n.content} /></div>
-						<div class="flex shrink-0 gap-2 text-zinc-600">
-							<button
-								type="button"
-								onclick={() => setPinned(n.id, !n.pinned)}
-								aria-label={n.pinned ? 'Pin entfernen' : 'Anpinnen'}
-								class="transition-colors {n.pinned ? 'text-amber-300' : 'hover:text-zinc-300'}"
-							>
-								<Icon name="bookmark" class="h-4 w-4" filled={n.pinned} />
-							</button>
-							<button
-								type="button"
-								onclick={() => startEdit(n)}
-								aria-label="Bearbeiten"
-								class="transition-colors hover:text-zinc-300"
-							>
-								<Icon name="pencil" class="h-4 w-4" />
-							</button>
-							<button
-								type="button"
-								onclick={() => softDeleteNote(n.id)}
-								aria-label="Löschen"
-								class="transition-colors hover:text-rose-400"
-							>
-								<Icon name="x" class="h-4 w-4" />
-							</button>
-						</div>
-					</div>
-
-					<div class="mt-2 flex flex-wrap items-center gap-1">
-						{#each n.tags as t (t)}
-							<span
-								class="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-300 ring-1 ring-white/10 ring-inset"
-							>
-								#{t}
-								<button
-									type="button"
-									onclick={() => removeTag(n.id, t)}
-									aria-label="Tag entfernen"
-									class="text-zinc-500 hover:text-rose-400">×</button
-								>
-							</span>
-						{/each}
-						{#if tagFor === n.id}
-							<input
-								bind:value={tagText}
-								placeholder="Tag …"
-								onkeydown={(e) => {
-									if (e.key === 'Enter') tagHinzufuegen(n.id);
-								}}
-								class="w-24 rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-teal-300/50"
-							/>
-						{:else}
-							<button
-								type="button"
-								onclick={() => {
-									tagFor = n.id;
-									tagText = '';
-								}}
-								class="rounded-full px-2 py-0.5 text-xs text-zinc-500 hover:text-zinc-200"
-								>+ Tag</button
-							>
-						{/if}
-					</div>
-
-					<div class="mt-2 flex items-center gap-2 text-xs text-zinc-500">
 						<button
 							type="button"
-							onclick={() => setCategory(n.id, naechste[n.category])}
-							class="chip px-2 py-0.5 {categoryBadge[n.category]}"
-							title="Kategorie wechseln"
+							onclick={() => softDeleteNote(n.id)}
+							aria-label="Löschen"
+							class="transition-colors hover:text-rose-400"
 						>
-							{categoryLabel[n.category]}
+							<Icon name="x" class="h-4 w-4" />
 						</button>
-						{#if n.projectId && projektName.get(n.projectId)}
-							<span
-								class="flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-zinc-400 ring-1 ring-white/10 ring-inset"
-							>
-								<Icon name="folder" class="h-3 w-3" />
-								{projektName.get(n.projectId)}
-							</span>
-						{/if}
-						<span>{datumZeit(n.createdAt)}</span>
 					</div>
-					<KategorieVorschlag note={n} />
-				{/if}
+				</div>
+
+				<div class="mt-2 flex flex-wrap items-center gap-1">
+					{#each n.tags as t (t)}
+						<span
+							class="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-300 ring-1 ring-white/10 ring-inset"
+						>
+							#{t}
+							<button
+								type="button"
+								onclick={() => removeTag(n.id, t)}
+								aria-label="Tag entfernen"
+								class="text-zinc-500 hover:text-rose-400">×</button
+							>
+						</span>
+					{/each}
+					{#if tagFor === n.id}
+						<input
+							bind:value={tagText}
+							placeholder="Tag …"
+							onkeydown={(e) => {
+								if (e.key === 'Enter') tagHinzufuegen(n.id);
+							}}
+							class="w-24 rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-teal-300/50"
+						/>
+					{:else}
+						<button
+							type="button"
+							onclick={() => {
+								tagFor = n.id;
+								tagText = '';
+							}}
+							class="rounded-full px-2 py-0.5 text-xs text-zinc-500 hover:text-zinc-200"
+							>+ Tag</button
+						>
+					{/if}
+				</div>
+
+				<div class="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+					<button
+						type="button"
+						onclick={() => setCategory(n.id, naechste[n.category])}
+						class="chip px-2 py-0.5 {categoryBadge[n.category]}"
+						title="Kategorie wechseln"
+					>
+						{categoryLabel[n.category]}
+					</button>
+					{#if n.projectId && projektName.get(n.projectId)}
+						<span
+							class="flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-zinc-400 ring-1 ring-white/10 ring-inset"
+						>
+							<Icon name="folder" class="h-3 w-3" />
+							{projektName.get(n.projectId)}
+						</span>
+					{/if}
+					<span>{datumZeit(n.createdAt)}</span>
+				</div>
+				<KategorieVorschlag note={n} />
 			</div>
 		{/each}
 	</div>
+
+	{#if offeneNotiz}
+		<NotizModal
+			note={offeneNotiz}
+			projektName={offeneNotiz.projectId ? projektName.get(offeneNotiz.projectId) : undefined}
+			onClose={() => (offeneId = null)}
+		/>
+	{/if}
 </section>
