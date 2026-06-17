@@ -12,6 +12,12 @@
 	import PanelTermine from '$lib/components/PanelTermine.svelte';
 	import PanelNotizen from '$lib/components/PanelNotizen.svelte';
 	import { syncState } from '$lib/sync-state.svelte';
+	import { liveQuery } from 'dexie';
+	import { openTasks } from '$lib/db/notes';
+	import { upcomingAppointments } from '$lib/db/appointments';
+	import { faelligeErinnerungen } from '$lib/reminders';
+	import { filterBySphere } from '$lib/sphere';
+	import type { Note, Appointment } from '$lib/db/types';
 
 	let { children } = $props();
 
@@ -72,6 +78,25 @@
 	const railRouten = ['/notizen', '/termine', '/projekte', '/bucketlist', '/schlaf'];
 	const aktuelleRoute = $derived(page.url.pathname.slice(base.length) || '/');
 	const zeigeRail = $derived(railRouten.includes(aktuelleRoute));
+
+	// Erinnerungs-Badge am „Heute"-Tab: Anzahl überfälliger/anstehender Dinge
+	// (sphärengefiltert), von jedem Tab aus sichtbar.
+	let badgeAufgaben = $state<Note[]>([]);
+	let badgeTermine = $state<Appointment[]>([]);
+	$effect(() => {
+		const s1 = liveQuery(() => openTasks()).subscribe((v) => (badgeAufgaben = v));
+		const s2 = liveQuery(() => upcomingAppointments()).subscribe((v) => (badgeTermine = v));
+		return () => {
+			s1.unsubscribe();
+			s2.unsubscribe();
+		};
+	});
+	const erinnerungenAnzahl = $derived(
+		faelligeErinnerungen(
+			filterBySphere(badgeAufgaben, sphaere.current),
+			filterBySphere(badgeTermine, sphaere.current)
+		).anzahl
+	);
 </script>
 
 <svelte:head>
@@ -149,6 +174,13 @@
 					>
 						<Icon name={item.icon} class="h-5 w-5" />
 						<span>{item.label}</span>
+						{#if item.href === '/' && erinnerungenAnzahl > 0}
+							<span
+								class="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-semibold text-white"
+							>
+								{erinnerungenAnzahl}
+							</span>
+						{/if}
 					</a>
 				{/each}
 			</nav>
@@ -268,12 +300,19 @@
 					<li class="flex-1">
 						<a
 							{href}
-							class="flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors
+							class="relative flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors
 								{active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-200'}"
 							aria-current={active ? 'page' : undefined}
 						>
 							<Icon name={item.icon} class="h-5 w-5" />
 							<span>{item.label}</span>
+							{#if item.href === '/' && erinnerungenAnzahl > 0}
+								<span
+									class="absolute top-0.5 right-1/2 grid h-4 min-w-4 translate-x-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white"
+								>
+									{erinnerungenAnzahl}
+								</span>
+							{/if}
 						</a>
 					</li>
 				{/each}

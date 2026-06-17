@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
-	import { addNote, softDeleteNote, notesForDay } from '$lib/db/notes';
+	import { addNote, softDeleteNote, notesForDay, openTasks, setNoteCompleted } from '$lib/db/notes';
 	import { recentSleep, sleepDuration } from '$lib/db/sleep';
 	import { upcomingAppointments } from '$lib/db/appointments';
 	import { relativeDayLabel, tagesgruss } from '$lib/format';
+	import { faelligeErinnerungen } from '$lib/reminders';
 	import type { Appointment, Category, Note, SleepEntry } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
@@ -31,6 +32,7 @@
 	let notizenAlle = $state<Note[]>([]);
 	let schlaf = $state<SleepEntry[]>([]);
 	let termineAlle = $state<Appointment[]>([]);
+	let aufgabenAlle = $state<Note[]>([]);
 	$effect(() => {
 		const s = liveQuery(() => notesForDay(new Date())).subscribe((v) => (notizenAlle = v));
 		return () => s.unsubscribe();
@@ -43,12 +45,26 @@
 		const s = liveQuery(() => upcomingAppointments()).subscribe((v) => (termineAlle = v));
 		return () => s.unsubscribe();
 	});
+	$effect(() => {
+		const s = liveQuery(() => openTasks()).subscribe((v) => (aufgabenAlle = v));
+		return () => s.unsubscribe();
+	});
 
 	// Sphären-Sicht: Briefing und Tagesnotizen folgen dem globalen Umschalter.
 	const notizen = $derived(filterBySphere(notizenAlle, sphaere.current));
 	const termine = $derived(filterBySphere(termineAlle, sphaere.current));
 	const letzteNacht = $derived(schlaf[0]);
 	const naechste = $derived(termine.slice(0, 3));
+
+	// In-App-Erinnerungen: überfällige/bald fällige Aufgaben + anstehende Termine
+	// (sphärengefiltert). `now` tickt → bleibt aktuell.
+	const erinnerungen = $derived(
+		faelligeErinnerungen(
+			filterBySphere(aufgabenAlle, sphaere.current),
+			filterBySphere(termineAlle, sphaere.current),
+			now.getTime()
+		)
+	);
 
 	// In „Alles": je der nächste private und der nächste Arbeits-Termin —
 	// die beiden Lebensbereiche nebeneinander auf einen Blick.
@@ -94,6 +110,43 @@
 			<Wetter />
 		</div>
 	</div>
+
+	<!-- In-App-Erinnerungen: nur sichtbar, wenn etwas ansteht -->
+	{#if erinnerungen.anzahl > 0}
+		<div class="card border-amber-400/25 bg-amber-400/[0.06] p-4">
+			<h3 class="flex items-center gap-2 text-sm font-semibold text-amber-200">
+				<Icon name="flag" class="h-4 w-4" /> Erinnerungen ({erinnerungen.anzahl})
+			</h3>
+			<ul class="mt-2 space-y-1.5">
+				{#each erinnerungen.items as e (e.art === 'aufgabe' ? `a-${e.note.id}` : `t-${e.appointment.id}`)}
+					<li class="flex items-start gap-2 text-sm">
+						{#if e.art === 'aufgabe'}
+							<button
+								type="button"
+								onclick={() => setNoteCompleted(e.note.id, true)}
+								aria-label="Als erledigt markieren"
+								class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border border-zinc-600 text-transparent transition-colors hover:border-emerald-400 hover:text-emerald-300"
+							>
+								<Icon name="check" class="h-3 w-3" />
+							</button>
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-zinc-100">{e.note.content}</p>
+								<p class="text-xs {e.ueberfaellig ? 'font-medium text-rose-400' : 'text-zinc-500'}">
+									fällig {relativeDayLabel(e.zeit)}{#if e.ueberfaellig} · überfällig{/if}
+								</p>
+							</div>
+						{:else}
+							<Icon name="calendar" class="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-zinc-100">{e.appointment.title}</p>
+								<p class="text-xs text-zinc-500">{relativeDayLabel(e.zeit)}</p>
+							</div>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 
 	<!-- Ab lg: zweispaltig — Tagesbereich (2/3) + Überblick-Panels (1/3). -->
 	<div class="lg:grid lg:grid-cols-3 lg:items-start lg:gap-5">
