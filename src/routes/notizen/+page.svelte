@@ -17,6 +17,7 @@
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
 	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
+	import NotizInhalt from '$lib/components/NotizInhalt.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
 	// Live-Liste aller aktiven Notizen — aktualisiert sich bei jeder DB-Änderung.
@@ -158,9 +159,9 @@
 		</p>
 	{/if}
 
-	<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+	<div class="columns-1 gap-2 lg:columns-2 xl:columns-3">
 		{#each gefiltert as n (n.id)}
-			<div class="card p-3.5 {n.pinned ? 'border-amber-400/30' : ''}">
+			<div class="card mb-2 break-inside-avoid p-3.5 {n.pinned ? 'border-amber-400/30' : ''}">
 				{#if editId === n.id}
 					<textarea bind:value={editText} rows="2" class="field resize-none"></textarea>
 					<div class="mt-2 flex justify-end gap-2 text-sm">
@@ -177,7 +178,7 @@
 					</div>
 				{:else}
 					<div class="flex items-start justify-between gap-2">
-						<p class="text-sm whitespace-pre-wrap text-zinc-100">{n.content}</p>
+						<div class="min-w-0 flex-1"><NotizInhalt content={n.content} /></div>
 						<div class="flex shrink-0 gap-2 text-zinc-600">
 							<button
 								type="button"
