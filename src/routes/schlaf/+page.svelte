@@ -5,7 +5,8 @@
 		recentSleep,
 		sleepDuration,
 		deleteSleepEntry,
-		averageSleepMinutes
+		averageSleepMinutes,
+		schlafTrend
 	} from '$lib/db/sleep';
 	import type { SleepEntry } from '$lib/db/types';
 	import Icon from '$lib/components/Icon.svelte';
@@ -25,6 +26,13 @@
 
 	// Wochenschnitt = Ø Schlafdauer über die geladenen (letzten 7) Nächte.
 	const schnitt = $derived(averageSleepMinutes(liste));
+
+	// Trend-Diagramm: chronologisch; Skala mind. bis 8 h (480 min) für Vergleichbarkeit.
+	const trend = $derived(schlafTrend(liste));
+	const maxMin = $derived(Math.max(480, ...trend.map((t) => t.minutes), 1));
+	function kurzTag(date: string): string {
+		return new Date(date + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short' });
+	}
 
 	let datum = $state(heuteISO());
 	let bett = $state('23:00');
@@ -117,6 +125,28 @@
 				<Icon name="moon" class="h-4 w-4" /> Wochenschnitt
 			</span>
 			<span class="text-sm font-semibold text-indigo-100">Ø {minutesText(schnitt)}</span>
+		</div>
+	{/if}
+
+	{#if trend.length > 1}
+		<div class="card p-4 lg:max-w-2xl">
+			<h3 class="flex items-center gap-2 text-sm font-medium text-zinc-300">
+				<Icon name="moon" class="h-4 w-4 text-indigo-300" /> Schlaf-Trend
+			</h3>
+			<div class="mt-3 flex h-28 items-end gap-1">
+				{#each trend as t (t.date)}
+					<div class="flex min-w-0 flex-1 flex-col items-center">
+						<div class="flex w-full flex-1 items-end">
+							<div
+								class="w-full rounded-t bg-indigo-400/70"
+								style="height: {Math.max(4, Math.round((t.minutes / maxMin) * 100))}%"
+								title={minutesText(t.minutes)}
+							></div>
+						</div>
+						<span class="mt-1 text-[10px] text-zinc-500">{kurzTag(t.date)}</span>
+					</div>
+				{/each}
+			</div>
 		</div>
 	{/if}
 

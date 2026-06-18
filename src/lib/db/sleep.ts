@@ -56,6 +56,16 @@ export function averageSleepMinutes(entries: SleepEntry[]): number | null {
 	return Math.round(sum / entries.length);
 }
 
+// Schlaf-Trend fürs Balkendiagramm: chronologisch (alt → neu), Dauer in Minuten.
+// Reine Funktion über bereits geladene Einträge.
+export function schlafTrend(entries: SleepEntry[]): { date: string; minutes: number }[] {
+	return entries
+		.filter((e) => e.deletedAt === null)
+		.slice()
+		.sort((a, b) => a.date.localeCompare(b.date))
+		.map((e) => ({ date: e.date, minutes: sleepDuration(e.bedTime, e.wakeTime) }));
+}
+
 // Letzte N Einträge, nach Datum absteigend.
 export async function recentSleep(limit = 7): Promise<SleepEntry[]> {
 	const arr = await db.sleepEntries.toArray();

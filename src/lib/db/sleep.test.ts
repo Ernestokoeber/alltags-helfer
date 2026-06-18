@@ -5,7 +5,8 @@ import {
 	saveSleepEntry,
 	recentSleep,
 	sleepForDate,
-	averageSleepMinutes
+	averageSleepMinutes,
+	schlafTrend
 } from './sleep';
 import type { SleepEntry } from './types';
 
@@ -61,5 +62,17 @@ describe('Schlaf', () => {
 
 		const liste = await recentSleep();
 		expect(liste.map((e) => e.date)).toEqual(['2026-06-05', '2026-06-04', '2026-06-03']);
+	});
+
+	it('schlafTrend: chronologisch (alt → neu) mit Dauer in Minuten', () => {
+		const e = (date: string, bedTime: string, wakeTime: string): SleepEntry => ({
+			...entry(bedTime, wakeTime),
+			date
+		});
+		const trend = schlafTrend([e('2026-06-05', '23:00', '07:00'), e('2026-06-03', '22:00', '06:30')]);
+		expect(trend).toEqual([
+			{ date: '2026-06-03', minutes: 510 },
+			{ date: '2026-06-05', minutes: 480 }
+		]);
 	});
 });

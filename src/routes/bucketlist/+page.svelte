@@ -98,6 +98,21 @@
 		</div>
 	</div>
 
+	{#if liste.length > 0}
+		<div class="card p-4 lg:max-w-2xl">
+			<div class="flex items-center justify-between text-sm">
+				<span class="font-medium text-zinc-300">Fortschritt</span>
+				<span class="text-zinc-400">{erledigteAnzahl} von {liste.length} erreicht</span>
+			</div>
+			<div class="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+				<div
+					class="h-full rounded-full bg-teal-400 transition-all"
+					style="width: {Math.round((erledigteAnzahl / liste.length) * 100)}%"
+				></div>
+			</div>
+		</div>
+	{/if}
+
 	{#if erledigteAnzahl > 0}
 		<div class="flex justify-end px-1">
 			<button
