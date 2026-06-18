@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
-	import { openTasks, setNoteCompleted } from '$lib/db/notes';
+	import { openTasks, erledige } from '$lib/db/notes';
 	import { allProjects } from '$lib/db/projects';
 	import { filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
@@ -49,7 +49,7 @@
 				<li class="flex items-start gap-2">
 					<button
 						type="button"
-						onclick={() => setNoteCompleted(n.id, true)}
+						onclick={() => erledige(n, true)}
 						aria-label="Als erledigt markieren"
 						class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border border-zinc-600 text-transparent transition-colors hover:border-emerald-400 hover:text-emerald-300"
 					>
@@ -73,6 +73,9 @@
 									<Icon name="folder" class="h-3 w-3" />
 									{projektName.get(n.projectId)}
 								</span>
+							{/if}
+							{#if n.recurrence}
+								<Icon name="repeat" class="h-3 w-3 text-zinc-500" />
 							{/if}
 						</div>
 					</div>

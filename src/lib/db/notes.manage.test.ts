@@ -14,7 +14,9 @@ import {
 	setNoteCompleted,
 	isOpen,
 	sortTasks,
-	openTasks
+	openTasks,
+	naechsteFrist,
+	erledige
 } from './notes';
 
 beforeEach(async () => {
@@ -162,5 +164,41 @@ describe('Notizen als Aufgaben (Frist & Erledigt)', () => {
 		expect(inhalte).not.toContain('lose Notiz');
 		expect(inhalte).not.toContain('erledigt');
 		expect(inhalte).not.toContain('gelöscht');
+	});
+});
+
+describe('Wiederkehrende Aufgaben', () => {
+	it('naechsteFrist: rückt täglich/wöchentlich/monatlich vor', () => {
+		const d = new Date(2026, 0, 15, 9, 30).getTime(); // 15.01.2026
+		expect(new Date(naechsteFrist(d, 'daily')).getDate()).toBe(16);
+		expect(new Date(naechsteFrist(d, 'weekly')).getDate()).toBe(22);
+		expect(new Date(naechsteFrist(d, 'monthly')).getMonth()).toBe(1); // Februar
+	});
+
+	it('erledige: erzeugt beim Erledigen die nächste Instanz (mit Frist + Wiederholung)', async () => {
+		const due = new Date(2026, 0, 15, 9, 0).getTime();
+		const n = await addNote({ content: 'Müll raus', dueAt: due, recurrence: 'weekly', projectId: 'p1' });
+		await erledige(n, true);
+
+		const offen = (await db.notes.toArray()).filter((x) => x.completedAt == null);
+		expect(offen).toHaveLength(1);
+		expect(offen[0].content).toBe('Müll raus');
+		expect(offen[0].dueAt).toBe(naechsteFrist(due, 'weekly'));
+		expect(offen[0].projectId).toBe('p1');
+	});
+
+	it('erledige: einmalige Aufgabe erzeugt nichts, Wieder-Öffnen auch nicht', async () => {
+		const n = await addNote({ content: 'einmal', dueAt: Date.now() });
+		await erledige(n, true);
+		expect((await db.notes.toArray()).length).toBe(1);
+		await erledige({ ...n, recurrence: 'daily' }, false); // done=false → keine Instanz
+		expect((await db.notes.toArray()).length).toBe(1);
+	});
+
+	it('erledige: respektiert recurrenceUntil (keine Instanz nach Ende)', async () => {
+		const due = new Date(2026, 0, 15, 9, 0).getTime();
+		const n = await addNote({ content: 'x', dueAt: due, recurrence: 'daily', recurrenceUntil: due });
+		await erledige(n, true);
+		expect((await db.notes.toArray()).length).toBe(1); // nächste wäre nach until → keine
 	});
 });

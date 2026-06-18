@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
-	import { addNote, softDeleteNote, notesForDay, openTasks, setNoteCompleted } from '$lib/db/notes';
+	import { addNote, softDeleteNote, notesForDay, openTasks, erledige } from '$lib/db/notes';
 	import { recentSleep, sleepDuration } from '$lib/db/sleep';
 	import { upcomingAppointments } from '$lib/db/appointments';
 	import { relativeDayLabel, tagesgruss } from '$lib/format';
@@ -123,7 +123,7 @@
 						{#if e.art === 'aufgabe'}
 							<button
 								type="button"
-								onclick={() => setNoteCompleted(e.note.id, true)}
+								onclick={() => erledige(e.note, true)}
 								aria-label="Als erledigt markieren"
 								class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border border-zinc-600 text-transparent transition-colors hover:border-emerald-400 hover:text-emerald-300"
 							>
@@ -239,6 +239,9 @@
 					placeholder="Was möchtest du festhalten?"
 					class="field mt-2.5 resize-none"
 				></textarea>
+				<p class="mt-1.5 flex items-center gap-1 text-[11px] text-zinc-600">
+					<Icon name="mic" class="h-3 w-3" /> Tipp: zum Diktieren das Tastatur-Mikrofon nutzen
+				</p>
 				<div class="mt-2.5 flex items-center justify-between gap-2">
 					<div class="flex gap-1">
 						{#each kategorien as k (k)}

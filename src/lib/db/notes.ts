@@ -1,5 +1,5 @@
 import { db, uuid } from './db';
-import type { Category, Note } from './types';
+import type { Category, Note, Recurrence } from './types';
 
 // Neue Notiz anlegen (P0: nur Text). Gibt die erzeugte Notiz zurück.
 // dueAt setzt optional eine Aufgaben-Frist; neue Notizen sind immer offen.
@@ -8,6 +8,8 @@ export async function addNote(input: {
 	category?: Category;
 	projectId?: string;
 	dueAt?: number | null;
+	recurrence?: Recurrence;
+	recurrenceUntil?: number | null;
 }): Promise<Note> {
 	const now = Date.now();
 	const note: Note = {
@@ -21,6 +23,8 @@ export async function addNote(input: {
 		projectId: input.projectId,
 		dueAt: input.dueAt ?? null,
 		completedAt: null,
+		recurrence: input.recurrence,
+		recurrenceUntil: input.recurrenceUntil ?? null,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null
@@ -85,6 +89,34 @@ export async function setNoteDue(id: string, dueAt: number | null): Promise<void
 // Erledigt-Status umschalten: completedAt = jetzt (erledigt) bzw. null (offen).
 export async function setNoteCompleted(id: string, done: boolean): Promise<void> {
 	await db.notes.update(id, { completedAt: done ? Date.now() : null, updatedAt: Date.now() });
+}
+
+// Nächste Frist einer Wiederholung (komponentenweise; behält Uhrzeit/Monatstag).
+export function naechsteFrist(ms: number, rec: Recurrence): number {
+	const d = new Date(ms);
+	if (rec === 'daily')
+		return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, d.getHours(), d.getMinutes()).getTime();
+	if (rec === 'weekly')
+		return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7, d.getHours(), d.getMinutes()).getTime();
+	return new Date(d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()).getTime();
+}
+
+// Aufgabe erledigen/öffnen. Beim Erledigen einer wiederkehrenden Aufgabe (mit Frist)
+// entsteht automatisch die nächste Instanz — sofern das Wiederhol-Ende nicht
+// überschritten ist. Beim Wieder-Öffnen passiert nichts Zusätzliches.
+export async function erledige(note: Note, done: boolean): Promise<void> {
+	await setNoteCompleted(note.id, done);
+	if (!done || !note.recurrence || note.dueAt == null) return;
+	const next = naechsteFrist(note.dueAt, note.recurrence);
+	if (note.recurrenceUntil != null && next > note.recurrenceUntil) return;
+	await addNote({
+		content: note.content,
+		category: note.category,
+		projectId: note.projectId,
+		dueAt: next,
+		recurrence: note.recurrence,
+		recurrenceUntil: note.recurrenceUntil
+	});
 }
 
 // Eine Notiz gilt als offen, solange sie nicht als erledigt markiert ist.

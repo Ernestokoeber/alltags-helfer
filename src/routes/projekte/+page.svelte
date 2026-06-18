@@ -13,6 +13,7 @@
 		addNote,
 		softDeleteNote,
 		setNoteCompleted,
+		erledige,
 		sortTasks,
 		isOpen
 	} from '$lib/db/notes';
@@ -22,7 +23,7 @@
 		appointmentsForProject,
 		appointmentCountByProject
 	} from '$lib/db/appointments';
-	import type { Category, Note, Project, Appointment } from '$lib/db/types';
+	import type { Category, Note, Project, Appointment, Recurrence } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import { page } from '$app/state';
@@ -146,16 +147,35 @@
 		openId = p.id; // direkt hineinspringen
 	}
 
-	// --- Formular: Aufgabe (Notiz mit optionaler Frist) ---
+	// --- Formular: Aufgabe (Notiz mit optionaler Frist + Wiederholung) ---
 	let aufgabeText = $state('');
 	let aufgabeFrist = $state(''); // datetime-local
+	let aufgabeWdh = $state<Recurrence | 'none'>('none');
+	const wiederholungen: { wert: Recurrence | 'none'; label: string }[] = [
+		{ wert: 'none', label: 'Einmalig' },
+		{ wert: 'daily', label: 'Täglich' },
+		{ wert: 'weekly', label: 'Wöchentlich' },
+		{ wert: 'monthly', label: 'Monatlich' }
+	];
+	const wdhLabel: Record<Recurrence, string> = {
+		daily: 'täglich',
+		weekly: 'wöchentlich',
+		monthly: 'monatlich'
+	};
 	async function aufgabeSpeichern() {
 		const inhalt = aufgabeText.trim();
 		if (!inhalt || !offen) return;
 		const due = aufgabeFrist ? new Date(aufgabeFrist).getTime() : null;
-		await addNote({ content: inhalt, category: offen.category, projectId: offen.id, dueAt: due });
+		await addNote({
+			content: inhalt,
+			category: offen.category,
+			projectId: offen.id,
+			dueAt: due,
+			recurrence: aufgabeWdh === 'none' ? undefined : aufgabeWdh
+		});
 		aufgabeText = '';
 		aufgabeFrist = '';
+		aufgabeWdh = 'none';
 	}
 
 	// --- Formular: Termin ---
@@ -320,6 +340,18 @@
 					placeholder="Was ist zu tun?"
 					class="field resize-none"
 				></textarea>
+				<div class="flex flex-wrap gap-1" role="group" aria-label="Wiederholung wählen">
+					{#each wiederholungen as w (w.wert)}
+						<button
+							type="button"
+							onclick={() => (aufgabeWdh = w.wert)}
+							aria-pressed={aufgabeWdh === w.wert}
+							class="chip px-2.5 {aufgabeWdh === w.wert ? 'bg-zinc-100 text-zinc-900' : 'chip-idle'}"
+						>
+							{w.label}
+						</button>
+					{/each}
+				</div>
 				<div class="flex items-center justify-between gap-2">
 					<label class="flex items-center gap-1.5 text-xs text-zinc-400">
 						<Icon name="flag" class="h-3.5 w-3.5" /> Frist
@@ -352,7 +384,7 @@
 						<div class="flex items-start gap-3">
 							<button
 								type="button"
-								onclick={() => setNoteCompleted(n.id, isOpen(n))}
+								onclick={() => erledige(n, isOpen(n))}
 								aria-label={isOpen(n) ? 'Als erledigt markieren' : 'Wieder öffnen'}
 								class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors {isOpen(
 									n
@@ -383,6 +415,11 @@
 										</span>
 									{/if}
 									<span class="text-zinc-600">erstellt {fmtDatum(n.createdAt)}</span>
+									{#if n.recurrence}
+										<span class="flex items-center gap-1 text-zinc-500">
+											<Icon name="repeat" class="h-3.5 w-3.5" /> {wdhLabel[n.recurrence]}
+										</span>
+									{/if}
 									{#if !isOpen(n) && n.completedAt}
 										<span class="flex items-center gap-1 text-emerald-400/80">
 											<Icon name="check" class="h-3.5 w-3.5" /> erledigt {fmtDatumZeit(n.completedAt)}

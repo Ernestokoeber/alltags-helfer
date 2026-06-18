@@ -24,6 +24,8 @@ export interface Note extends SyncMeta {
 	projectId?: string; // optional einem Projekt zugeordnet (seit v3)
 	dueAt?: number | null; // Aufgaben-Frist „bis wann erledigt"; null/fehlt = keine Frist (seit v4)
 	completedAt?: number | null; // wann als erledigt markiert; null/fehlt = offen (seit v4)
+	recurrence?: Recurrence; // wiederkehrende Aufgabe; beim Erledigen entsteht die nächste Instanz
+	recurrenceUntil?: number | null; // optionales Ende der Wiederholung
 	audioPath?: string;
 	transcript?: string;
 }

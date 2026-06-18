@@ -109,6 +109,9 @@
 			placeholder="Schnelle Notiz …"
 			class="field resize-none"
 		></textarea>
+		<p class="flex items-center gap-1 text-[11px] text-zinc-600">
+			<Icon name="mic" class="h-3 w-3" /> Tipp: zum Diktieren das Tastatur-Mikrofon nutzen
+		</p>
 		<ProjektSelect bind:value={neuProjektId} options={projektOptionen} label="Projekt für Notiz" />
 		<div class="flex justify-end">
 			<button
