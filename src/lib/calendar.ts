@@ -31,6 +31,8 @@ export function terminInstanzen(termine: Appointment[], von: number, bis: number
 		if (t.deletedAt != null) continue;
 		const r = t.recurrence;
 		const ende = Math.min(bis, t.recurrenceUntil ?? bis);
+		// Ausgenommene Vorkommen (z. B. „nur diesen Termin gelöscht").
+		const ex = new Set((t.exDates ?? []).map((ms) => tagKey(ms)));
 
 		if (!r) {
 			if (t.startAt >= von && t.startAt <= bis) out.push(t);
@@ -44,7 +46,7 @@ export function terminInstanzen(termine: Appointment[], von: number, bis: number
 			let ms = t.startAt;
 			if (ms < von) ms += Math.ceil((von - ms) / schritt) * schritt;
 			for (; ms <= ende; ms += schritt) {
-				if (ms >= t.startAt) out.push({ ...t, startAt: ms });
+				if (ms >= t.startAt && !ex.has(tagKey(ms))) out.push({ ...t, startAt: ms });
 			}
 		} else {
 			// monatlich: komponentenweise (gleicher Tag im Monat); wenige Iterationen.
@@ -52,7 +54,7 @@ export function terminInstanzen(termine: Appointment[], von: number, bis: number
 			let guard = 0;
 			while (occ.getTime() <= ende && guard < 600) {
 				const ms = occ.getTime();
-				if (ms >= von && ms >= t.startAt) out.push({ ...t, startAt: ms });
+				if (ms >= von && ms >= t.startAt && !ex.has(tagKey(ms))) out.push({ ...t, startAt: ms });
 				occ = new Date(occ.getFullYear(), occ.getMonth() + 1, occ.getDate(), occ.getHours(), occ.getMinutes());
 				guard++;
 			}

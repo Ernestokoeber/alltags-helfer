@@ -52,6 +52,7 @@ export interface Appointment extends SyncMeta {
 	projectId?: string; // optional einem Projekt zugeordnet (seit v4)
 	recurrence?: Recurrence; // Wiederholung; fehlt = einmalig (seit 2026-06-18)
 	recurrenceUntil?: number | null; // optionales Ende der Wiederholung (null/fehlt = unbegrenzt)
+	exDates?: number[]; // ausgenommene Vorkommen einer Serie (Tagesbeginn in Unix-ms)
 }
 
 export interface PrepTask extends SyncMeta {

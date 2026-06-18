@@ -2,12 +2,12 @@
 	// Monats-Kalender für Termine: Raster Mo–So mit farbigen Markern pro Tag,
 	// darunter die Termine des gewählten Tages. Wiederkehrende Termine werden für
 	// den sichtbaren Bereich aufgefächert (terminInstanzen).
-	import { deleteAppointment } from '$lib/db/appointments';
 	import { monatsTage, tagKey, gruppiereNachTag, terminInstanzen } from '$lib/calendar';
 	import { categoryBadge, categoryLabel } from '$lib/sphere';
 	import type { Appointment, Category } from '$lib/db/types';
 	import Vorbereitung from './Vorbereitung.svelte';
 	import Icon from './Icon.svelte';
+	import TerminModal from './TerminModal.svelte';
 
 	let { termine }: { termine: Appointment[] } = $props();
 
@@ -55,6 +55,13 @@
 			day: '2-digit',
 			month: 'long'
 		});
+	}
+
+	// Geklicktes Vorkommen zum Bearbeiten öffnen — Serien-Datensatz + Vorkommens-Datum.
+	let offen = $state<{ appointment: Appointment; occurrenceMs: number } | null>(null);
+	function oeffne(instanz: Appointment) {
+		const original = termine.find((t) => t.id === instanz.id);
+		if (original) offen = { appointment: original, occurrenceMs: instanz.startAt };
 	}
 </script>
 
@@ -132,15 +139,19 @@
 		{:else}
 			{#each tagesTermine as t (t.id + t.startAt)}
 				<div class="card p-3">
-					<div class="flex items-start justify-between gap-3">
-						<div class="min-w-0">
-							<div class="flex items-center gap-2">
-								<p class="truncate text-sm font-medium text-zinc-100">{t.title}</p>
+					<button
+						type="button"
+						onclick={() => oeffne(t)}
+						class="-m-1 flex w-full items-start justify-between gap-3 rounded-lg p-1 text-left transition-colors hover:bg-white/[0.04]"
+					>
+						<span class="min-w-0">
+							<span class="flex items-center gap-2">
+								<span class="truncate text-sm font-medium text-zinc-100">{t.title}</span>
 								<span class="chip shrink-0 px-2 py-0.5 {categoryBadge[t.category]}"
 									>{categoryLabel[t.category]}</span
 								>
-							</div>
-							<p class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+							</span>
+							<span class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
 								<Icon name="clock" class="h-3.5 w-3.5" />
 								{zeit(t.startAt)}
 								{#if t.recurrence}<Icon name="repeat" class="ml-1 h-3.5 w-3.5" />{/if}
@@ -148,17 +159,10 @@
 									<Icon name="mapPin" class="ml-1 h-3.5 w-3.5" />
 									{t.location}
 								{/if}
-							</p>
-						</div>
-						<button
-							type="button"
-							onclick={() => deleteAppointment(t.id)}
-							aria-label="Löschen"
-							class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
-						>
-							<Icon name="x" class="h-4 w-4" />
-						</button>
-					</div>
+							</span>
+						</span>
+						<Icon name="pencil" class="mt-0.5 h-4 w-4 shrink-0 text-zinc-600" />
+					</button>
 					{#if !t.recurrence}
 						<Vorbereitung appointmentId={t.id} />
 					{/if}
@@ -167,3 +171,11 @@
 		{/if}
 	</div>
 </div>
+
+{#if offen}
+	<TerminModal
+		appointment={offen.appointment}
+		occurrenceMs={offen.occurrenceMs}
+		onClose={() => (offen = null)}
+	/>
+{/if}

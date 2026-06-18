@@ -77,6 +77,13 @@ describe('terminInstanzen (Wiederholung)', () => {
 		expect(inst.map((i) => new Date(i.startAt).getMonth())).toEqual([0, 1, 2]); // Jan, Feb, Mär
 	});
 
+	it('überspringt ausgenommene Vorkommen (exDates)', () => {
+		const t = { ...mk('d', T + 9 * 3_600_000, 'daily'), exDates: [new Date(2026, 5, 2).getTime()] };
+		const inst = terminInstanzen([t], T, T + 6 * DAY + 23 * 3_600_000);
+		expect(inst).toHaveLength(6); // 7 Tage minus der ausgenommene 02.06.
+		expect(inst.some((i) => tagKey(i.startAt) === '2026-06-02')).toBe(false);
+	});
+
 	it('recurrenceUntil begrenzt die Serie', () => {
 		const inst = terminInstanzen(
 			[mk('d', T + 9 * 3_600_000, 'daily', T + 2 * DAY)],

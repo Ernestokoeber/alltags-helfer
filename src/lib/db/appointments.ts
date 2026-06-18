@@ -49,6 +49,25 @@ export async function deleteAppointment(id: string): Promise<void> {
 	await db.appointments.update(id, { deletedAt: now, updatedAt: now });
 }
 
+// Termin-Felder aktualisieren (Bearbeiten). updatedAt wird mitgesetzt.
+export async function updateAppointment(
+	id: string,
+	patch: Partial<
+		Pick<Appointment, 'title' | 'startAt' | 'location' | 'category' | 'recurrence' | 'recurrenceUntil'>
+	>
+): Promise<void> {
+	await db.appointments.update(id, { ...patch, updatedAt: Date.now() });
+}
+
+// Ein einzelnes Vorkommen einer Serie ausnehmen (Tagesbeginn in ms).
+export async function addExDate(id: string, tagBeginnMs: number): Promise<void> {
+	const t = await db.appointments.get(id);
+	if (!t) return;
+	const ex = t.exDates ?? [];
+	if (ex.includes(tagBeginnMs)) return;
+	await db.appointments.update(id, { exDates: [...ex, tagBeginnMs], updatedAt: Date.now() });
+}
+
 // Termine eines Projekts, aufsteigend nach Startzeit, ohne gelöschte.
 export async function appointmentsForProject(projectId: string): Promise<Appointment[]> {
 	const arr = await db.appointments.where('projectId').equals(projectId).toArray();
