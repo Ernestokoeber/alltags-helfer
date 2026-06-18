@@ -26,6 +26,7 @@ export interface Note extends SyncMeta {
 	completedAt?: number | null; // wann als erledigt markiert; null/fehlt = offen (seit v4)
 	recurrence?: Recurrence; // wiederkehrende Aufgabe; beim Erledigen entsteht die nächste Instanz
 	recurrenceUntil?: number | null; // optionales Ende der Wiederholung
+	isTask?: boolean; // explizit als Aufgabe angelegt (Aufgaben-Tab); sonst gilt Frist/Projekt
 	audioPath?: string;
 	transcript?: string;
 }

@@ -30,6 +30,7 @@
 	import { replaceState } from '$app/navigation';
 	import { base } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
+	import NotizModal from '$lib/components/NotizModal.svelte';
 
 	// --- Live-Datenquellen ---
 	// Alle aktiven Projekte (für Baum, Breadcrumb, Ordner/Blatt-Entscheidung).
@@ -115,6 +116,12 @@
 	});
 	const aufgaben = $derived(sortTasks(projektNotizen));
 	const hatInhalte = $derived(projektNotizen.length > 0 || projektTermine.length > 0);
+
+	// Aufgabe im NotizModal öffnen (lesen/bearbeiten) — live aus den Projekt-Notizen.
+	let aufgabeOffenId = $state<string | null>(null);
+	const offeneAufgabe = $derived(
+		aufgabeOffenId ? (projektNotizen.find((n) => n.id === aufgabeOffenId) ?? null) : null
+	);
 
 	// Inhalte nur im Blatt: solange keine Unterprojekte da sind.
 	const darfInhalte = $derived(!!openId && !hatKinder);
@@ -395,13 +402,20 @@
 								<Icon name="check" class="h-3.5 w-3.5" />
 							</button>
 							<div class="min-w-0 flex-1">
-								<p
-									class="text-sm whitespace-pre-wrap {isOpen(n)
-										? 'text-zinc-100'
-										: 'text-zinc-400 line-through'}"
+								<button
+									type="button"
+									onclick={() => (aufgabeOffenId = n.id)}
+									class="block w-full text-left"
+									aria-label="Aufgabe öffnen"
 								>
-									{n.content}
-								</p>
+									<span
+										class="line-clamp-4 block text-sm whitespace-pre-wrap {isOpen(n)
+											? 'text-zinc-100'
+											: 'text-zinc-400 line-through'}"
+									>
+										{n.content}
+									</span>
+								</button>
 								<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
 									{#if n.dueAt}
 										<span
@@ -539,6 +553,10 @@
 		</div>
 	{/if}
 </section>
+
+{#if offeneAufgabe}
+	<NotizModal note={offeneAufgabe} projektName={offen?.name} onClose={() => (aufgabeOffenId = null)} />
+{/if}
 
 <!-- Eine Projekt-Zeile in einer Liste (Ordner oder Blatt). -->
 {#snippet projektZeile(p: Project)}

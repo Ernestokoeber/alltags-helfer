@@ -5,13 +5,13 @@
 	import {
 		setPinned,
 		setCategory,
-		updateNoteContent,
+		updateNoteDetails,
 		addTag,
 		removeTag,
 		softDeleteNote
 	} from '$lib/db/notes';
 	import { categoryLabel, categoryBadge } from '$lib/sphere';
-	import type { Category, Note } from '$lib/db/types';
+	import type { Category, Note, Recurrence } from '$lib/db/types';
 	import Icon from './Icon.svelte';
 	import Markdown from './Markdown.svelte';
 
@@ -26,14 +26,47 @@
 
 	let bearbeiten = $state(false);
 	let text = $state(''); // Bearbeiten-Puffer, wird in starteBearbeiten gefüllt
+	let frist = $state(''); // datetime-local
+	let wiederholung = $state<Recurrence | 'none'>('none');
+	let endeDatum = $state(''); // date
 	let tagText = $state('');
+
+	const wiederholungen: { wert: Recurrence | 'none'; label: string }[] = [
+		{ wert: 'none', label: 'Einmalig' },
+		{ wert: 'daily', label: 'Täglich' },
+		{ wert: 'weekly', label: 'Wöchentlich' },
+		{ wert: 'monthly', label: 'Monatlich' }
+	];
+
+	function toLocalInput(ms: number): string {
+		const d = new Date(ms);
+		const p = (n: number) => String(n).padStart(2, '0');
+		return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+	}
+	function toDateInput(ms: number): string {
+		const d = new Date(ms);
+		const p = (n: number) => String(n).padStart(2, '0');
+		return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+	}
 
 	function starteBearbeiten() {
 		text = note.content;
+		frist = note.dueAt != null ? toLocalInput(note.dueAt) : '';
+		wiederholung = note.recurrence ?? 'none';
+		endeDatum = note.recurrenceUntil ? toDateInput(note.recurrenceUntil) : '';
 		bearbeiten = true;
 	}
 	async function speichern() {
-		if (text.trim()) await updateNoteContent(note.id, text);
+		if (!text.trim()) return;
+		const dueAt = frist ? new Date(frist).getTime() : null;
+		const until =
+			wiederholung !== 'none' && endeDatum ? new Date(endeDatum + 'T23:59:59').getTime() : null;
+		await updateNoteDetails(note.id, {
+			content: text,
+			dueAt,
+			recurrence: wiederholung === 'none' ? undefined : wiederholung,
+			recurrenceUntil: until
+		});
 		bearbeiten = false;
 	}
 	async function tagHinzufuegen() {
@@ -138,7 +171,43 @@
 		<!-- Inhalt (scrollbar) -->
 		<div class="flex-1 overflow-y-auto px-4 py-4">
 			{#if bearbeiten}
-				<textarea bind:value={text} rows="12" class="field resize-y"></textarea>
+				<textarea bind:value={text} rows="9" class="field resize-y"></textarea>
+				<div class="mt-3 flex flex-col gap-3">
+					<label class="flex flex-col gap-1 text-xs text-zinc-400">
+						Frist (optional → macht die Notiz zur Aufgabe)
+						<div class="flex items-center gap-2">
+							<input bind:value={frist} type="datetime-local" class="field" />
+							{#if frist}
+								<button
+									type="button"
+									onclick={() => (frist = '')}
+									class="shrink-0 text-xs text-zinc-500 hover:text-rose-400">entfernen</button
+								>
+							{/if}
+						</div>
+					</label>
+					<div class="flex flex-col gap-1 text-xs text-zinc-400">
+						<span>Wiederholung</span>
+						<div class="flex flex-wrap gap-1" role="group" aria-label="Wiederholung wählen">
+							{#each wiederholungen as w (w.wert)}
+								<button
+									type="button"
+									onclick={() => (wiederholung = w.wert)}
+									aria-pressed={wiederholung === w.wert}
+									class="chip px-2.5 {wiederholung === w.wert
+										? 'bg-zinc-100 text-zinc-900'
+										: 'chip-idle'}">{w.label}</button
+								>
+							{/each}
+						</div>
+					</div>
+					{#if wiederholung !== 'none'}
+						<label class="flex flex-col gap-1 text-xs text-zinc-400">
+							Wiederholen bis (optional)
+							<input bind:value={endeDatum} type="date" class="field" />
+						</label>
+					{/if}
+				</div>
 				<div class="mt-3 flex justify-end gap-2">
 					<button
 						type="button"
@@ -148,6 +217,25 @@
 					<button type="button" onclick={speichern} class="btn-primary">Speichern</button>
 				</div>
 			{:else}
+				{#if note.dueAt != null || note.recurrence}
+					<div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+						{#if note.dueAt != null}
+							<span class="flex items-center gap-1">
+								<Icon name="flag" class="h-3.5 w-3.5" /> fällig {datumZeit(note.dueAt)}
+							</span>
+						{/if}
+						{#if note.recurrence}
+							<span class="flex items-center gap-1">
+								<Icon name="repeat" class="h-3.5 w-3.5" />
+								{note.recurrence === 'daily'
+									? 'täglich'
+									: note.recurrence === 'weekly'
+										? 'wöchentlich'
+										: 'monatlich'}
+							</span>
+						{/if}
+					</div>
+				{/if}
 				<Markdown source={note.content} />
 			{/if}
 		</div>

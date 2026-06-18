@@ -16,7 +16,10 @@ import {
 	sortTasks,
 	openTasks,
 	naechsteFrist,
-	erledige
+	erledige,
+	istAufgabe,
+	allTasks,
+	updateNoteDetails
 } from './notes';
 
 beforeEach(async () => {
@@ -200,5 +203,57 @@ describe('Wiederkehrende Aufgaben', () => {
 		const n = await addNote({ content: 'x', dueAt: due, recurrence: 'daily', recurrenceUntil: due });
 		await erledige(n, true);
 		expect((await db.notes.toArray()).length).toBe(1); // nächste wäre nach until → keine
+	});
+});
+
+describe('Aufgaben-Tab (istAufgabe / allTasks)', () => {
+	const basis: Note = {
+		id: 'x',
+		content: 'c',
+		type: 'text',
+		category: 'offen',
+		pinned: false,
+		importance: 0,
+		tags: [],
+		dueAt: null,
+		completedAt: null,
+		createdAt: 0,
+		updatedAt: 0,
+		deletedAt: null
+	};
+
+	it('istAufgabe: explizit (isTask) ODER Frist ODER Projekt; reine Notiz = false', () => {
+		expect(istAufgabe({ ...basis, isTask: true })).toBe(true);
+		expect(istAufgabe({ ...basis, dueAt: 123 })).toBe(true);
+		expect(istAufgabe({ ...basis, projectId: 'p1' })).toBe(true);
+		expect(istAufgabe(basis)).toBe(false);
+	});
+
+	it('allTasks: alle Aufgaben (offen + erledigt), reine Notizen ausgeschlossen', async () => {
+		await addNote({ content: 'frei', isTask: true });
+		await addNote({ content: 'mit Frist', dueAt: Date.now() + 1000 });
+		await addNote({ content: 'im Projekt', projectId: 'p1' });
+		await addNote({ content: 'nur Notiz' });
+		const erledigt = await addNote({ content: 'erledigt', isTask: true });
+		await setNoteCompleted(erledigt.id, true);
+
+		const inhalte = (await allTasks()).map((n) => n.content);
+		expect(inhalte).toEqual(expect.arrayContaining(['frei', 'mit Frist', 'im Projekt', 'erledigt']));
+		expect(inhalte).not.toContain('nur Notiz');
+	});
+
+	it('updateNoteDetails: setzt Inhalt/Frist/Wiederholung und kann sie zurücksetzen', async () => {
+		const n = await addNote({ content: 'x', dueAt: 1000, recurrence: 'daily', isTask: true });
+		await updateNoteDetails(n.id, {
+			content: 'y',
+			dueAt: null,
+			recurrence: undefined,
+			recurrenceUntil: null
+		});
+		const after = await db.notes.get(n.id);
+		expect(after?.content).toBe('y');
+		expect(after?.dueAt).toBeNull();
+		expect(after?.recurrence).toBeFalsy();
+		expect(istAufgabe(after as Note)).toBe(true); // bleibt Aufgabe (isTask)
 	});
 });

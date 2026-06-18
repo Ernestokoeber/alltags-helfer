@@ -10,6 +10,7 @@ export async function addNote(input: {
 	dueAt?: number | null;
 	recurrence?: Recurrence;
 	recurrenceUntil?: number | null;
+	isTask?: boolean;
 }): Promise<Note> {
 	const now = Date.now();
 	const note: Note = {
@@ -25,6 +26,7 @@ export async function addNote(input: {
 		completedAt: null,
 		recurrence: input.recurrence,
 		recurrenceUntil: input.recurrenceUntil ?? null,
+		isTask: input.isTask ?? false,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null
@@ -69,6 +71,28 @@ export async function searchNotes(query: string): Promise<Note[]> {
 // Inhalt einer Notiz ändern (getrimmt), updatedAt aktualisieren.
 export async function updateNoteContent(id: string, content: string): Promise<void> {
 	await db.notes.update(id, { content: content.trim(), updatedAt: Date.now() });
+}
+
+// Aufgaben-/Notiz-Details in einem Write aktualisieren (Inhalt + Frist + Wiederholung).
+// dueAt/recurrence/recurrenceUntil werden immer gesetzt → so lässt sich eine
+// Wiederholung auch auf „einmalig" (undefined) bzw. eine Frist auf null zurücksetzen.
+export async function updateNoteDetails(
+	id: string,
+	patch: {
+		content?: string;
+		dueAt: number | null;
+		recurrence?: Recurrence;
+		recurrenceUntil: number | null;
+	}
+): Promise<void> {
+	const changes: Partial<Note> = {
+		dueAt: patch.dueAt,
+		recurrence: patch.recurrence,
+		recurrenceUntil: patch.recurrenceUntil,
+		updatedAt: Date.now()
+	};
+	if (patch.content !== undefined) changes.content = patch.content.trim();
+	await db.notes.update(id, changes);
 }
 
 // Pin-Status setzen.
@@ -145,15 +169,23 @@ export function sortTasks(notes: Note[]): Note[] {
 	});
 }
 
-// Offene Aufgaben projektübergreifend: Notizen mit Projektbezug oder Frist,
-// die noch nicht erledigt sind — für den Desktop-Überblick. Sortiert wie
-// Aufgaben (überfällige/früheste Frist zuerst, dann fristlose nach Alter).
+// Eine Notiz gilt als Aufgabe, wenn sie explizit so angelegt wurde (isTask) oder
+// eine Frist bzw. Projektzuordnung hat. Zentral, damit alle Sichten konsistent sind.
+export function istAufgabe(n: Note): boolean {
+	return n.isTask === true || n.dueAt != null || n.projectId != null;
+}
+
+// Offene Aufgaben projektübergreifend, sortiert (überfällige/früheste Frist zuerst,
+// dann fristlose nach Alter) — für Dashboard-Panel & Badge.
 export async function openTasks(): Promise<Note[]> {
 	const arr = await db.notes.toArray();
-	const tasks = arr.filter(
-		(n) => n.deletedAt === null && isOpen(n) && (n.projectId != null || n.dueAt != null)
-	);
-	return sortTasks(tasks);
+	return sortTasks(arr.filter((n) => n.deletedAt === null && isOpen(n) && istAufgabe(n)));
+}
+
+// Alle Aufgaben projektübergreifend (offen + erledigt), sortiert — für den Aufgaben-Tab.
+export async function allTasks(): Promise<Note[]> {
+	const arr = await db.notes.toArray();
+	return sortTasks(arr.filter((n) => n.deletedAt === null && istAufgabe(n)));
 }
 
 // Tag hinzufügen (kleingeschrieben, dedupliziert).

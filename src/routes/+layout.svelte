@@ -58,6 +58,7 @@
 	const nav: { href: string; label: string; icon: IconName }[] = [
 		{ href: '/', label: 'Heute', icon: 'sun' },
 		{ href: '/notizen', label: 'Notizen', icon: 'note' },
+		{ href: '/aufgaben', label: 'Aufgaben', icon: 'check' },
 		{ href: '/projekte', label: 'Projekte', icon: 'folder' },
 		{ href: '/termine', label: 'Termine', icon: 'calendar' },
 		{ href: '/bucketlist', label: 'Bucket', icon: 'sparkles' },

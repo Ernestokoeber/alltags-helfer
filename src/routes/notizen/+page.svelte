@@ -7,7 +7,8 @@
 		setPinned,
 		setCategory,
 		addTag,
-		removeTag
+		removeTag,
+		istAufgabe
 	} from '$lib/db/notes';
 	import { allProjects, pickerProjects, type ProjectOption } from '$lib/db/projects';
 	import type { Category, Note } from '$lib/db/types';
@@ -56,7 +57,8 @@
 	// Erst die globale Sphäre, dann Suche + Kategorie-Chips als Feinfilter.
 	let suche = $state('');
 	let kategorie = $state<CategoryFilter>('alle');
-	const inSphaere = $derived(filterBySphere(alle, sphaere.current));
+	// Aufgaben (Frist/Projekt/isTask) leben im eigenen Aufgaben-Tab → hier ausblenden.
+	const inSphaere = $derived(filterBySphere(alle, sphaere.current).filter((n) => !istAufgabe(n)));
 	const gefiltert = $derived(filterNotes(inSphaere, suche, kategorie));
 
 	// Filter-Chips: Reihenfolge + Beschriftung.
