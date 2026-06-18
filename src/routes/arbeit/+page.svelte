@@ -42,6 +42,17 @@
 	});
 	const kollegenName = $derived(new Map(kollegen.map((k) => [k.id, k.name])));
 
+	// Listen-Filter nach Kollege (Chip nur für Kollegen, die Notizen haben).
+	let filterKollege = $state('alle');
+	const kollegenMitNotizen = $derived(
+		kollegen.filter((k) => kollegenNotizen.some((n) => n.colleagueId === k.id))
+	);
+	const sichtbareNotizen = $derived(
+		filterKollege !== 'alle' && kollegenMitNotizen.some((k) => k.id === filterKollege)
+			? kollegenNotizen.filter((n) => n.colleagueId === filterKollege)
+			: kollegenNotizen
+	);
+
 	let empfaenger = $state(''); // gewählter Kollege (id)
 	let notizText = $state('');
 	let neuerKollege = $state('');
@@ -208,9 +219,33 @@
 		<div class="space-y-2">
 			{#if kollegenNotizen.length === 0}
 				<p class="px-1 text-sm text-zinc-500">Noch keine Notizen.</p>
+			{:else if kollegenMitNotizen.length > 1}
+				<div
+					class="flex flex-wrap items-center gap-1 px-1"
+					role="group"
+					aria-label="Nach Kollege filtern"
+				>
+					<span class="mr-1 text-xs text-zinc-500">Filter:</span>
+					<button
+						type="button"
+						onclick={() => (filterKollege = 'alle')}
+						aria-pressed={filterKollege === 'alle'}
+						class="chip px-2.5 {filterKollege === 'alle' ? 'bg-zinc-100 text-zinc-900' : 'chip-idle'}"
+						>Alle</button
+					>
+					{#each kollegenMitNotizen as k (k.id)}
+						<button
+							type="button"
+							onclick={() => (filterKollege = k.id)}
+							aria-pressed={filterKollege === k.id}
+							class="chip px-2.5 {filterKollege === k.id ? 'bg-zinc-100 text-zinc-900' : 'chip-idle'}"
+							>{k.name}</button
+						>
+					{/each}
+				</div>
 			{/if}
 			<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-				{#each kollegenNotizen as n (n.id)}
+				{#each sichtbareNotizen as n (n.id)}
 					<div class="card p-3.5 {n.done ? 'opacity-60' : ''}">
 						<div class="flex items-start gap-3">
 							<button
@@ -308,6 +343,11 @@
 								{f.solution}
 							</p>
 						{/if}
+
+						<p class="mt-1.5 text-xs text-zinc-500">
+							erstellt {datumZeit(f.createdAt)}{#if f.status === 'geloest' && f.resolvedAt} · gelöst
+								{datumZeit(f.resolvedAt)}{/if}
+						</p>
 
 						{#if loesungFor === f.id}
 							<div class="mt-2 space-y-2">
