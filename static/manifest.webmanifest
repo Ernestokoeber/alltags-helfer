@@ -1,7 +1,7 @@
 {
-	"name": "Alltags-Helfer",
-	"short_name": "Alltags-Helfer",
-	"description": "Privat & Arbeit, ein Ort: Notizen, Termine, Bucketlist, Schlaf — local-first.",
+	"name": "Sphera",
+	"short_name": "Sphera",
+	"description": "Privat & Arbeit, ein Ort: Notizen, Aufgaben, Termine, Kundensupport — local-first, Ende-zu-Ende-verschlüsselt.",
 	"lang": "de",
 	"dir": "ltr",
 	"start_url": "./",

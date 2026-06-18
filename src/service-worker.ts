@@ -92,7 +92,7 @@ sw.addEventListener('fetch', (event) => {
 // Text. Details sieht man erst beim Öffnen der App (In-App-Erinnerungen).
 sw.addEventListener('push', (event) => {
 	event.waitUntil(
-		sw.registration.showNotification('Alltags-Helfer', {
+		sw.registration.showNotification('Sphera', {
 			body: 'Du hast eine fällige Erinnerung.',
 			icon: `${base}/icons/icon-192.png`,
 			badge: `${base}/icons/icon-192.png`,

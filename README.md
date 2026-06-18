@@ -1,8 +1,8 @@
-# Alltags-Helfer
+# Sphera
 
 **Privat & Arbeit, ein Ort.** Ein local-first Second-Brain & Daily-Planner als PWA
-(iPhone + Android + Desktop): Notizen, Termine mit Vorbereitung, Bucketlist,
-Schlaf-Tracking und ein Morgen-Briefing — verbunden durch die **Sphären-Sicht**:
+(iPhone + Android + Desktop): Notizen, Aufgaben, Termine/Kalender und ein
+Arbeitsbereich (Kollegen-Notizen + Kundensupport) — verbunden durch die **Sphären-Sicht**:
 Ein Umschalter im Header (Privat / Alles / Arbeit) filtert die gesamte App, sodass
 beide Lebensbereiche in einer App leben, ohne sich zu vermischen.
 

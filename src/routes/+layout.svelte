@@ -146,7 +146,7 @@
 					<Icon name="sun" class="h-4.5 w-4.5" />
 				</span>
 				<div class="leading-tight">
-					<p class="text-sm font-semibold tracking-tight">Alltags-Helfer</p>
+					<p class="text-sm font-semibold tracking-tight">Sphera</p>
 					<p class="text-[11px] text-zinc-500">Privat &amp; Arbeit, ein Ort</p>
 				</div>
 			</div>
@@ -240,7 +240,7 @@
 						<Icon name="sun" class="h-4.5 w-4.5" />
 					</span>
 					<div class="leading-tight">
-						<p class="text-sm font-semibold tracking-tight">Alltags-Helfer</p>
+						<p class="text-sm font-semibold tracking-tight">Sphera</p>
 						<p class="text-[11px] text-zinc-500">Privat &amp; Arbeit, ein Ort</p>
 					</div>
 				</div>

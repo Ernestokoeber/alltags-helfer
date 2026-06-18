@@ -1,4 +1,6 @@
-# Alltags-Helfer — Projektplan
+# Sphera — Projektplan
+
+> **App-Name:** **Sphera** (intern/technisch weiterhin `alltags-helfer`: Dexie-DB, `BACKUP_APP`, Worker-Name, npm-Paket — bewusst unverändert, sonst Datenverlust/Bruch).
 
 > **Stand:** 2026-06-18 · **Owner:** Ernestokoeber · **Status:** live auf GitHub Pages; ergänzt: Projekt-Hierarchie + Aufgaben, responsives Desktop-Layout, **Geräte-Sync (E2EE, Handy⇄PC bestätigt)**, In-App-Erinnerungen, Markdown-Notizen, globale Suche, **Kalender + wiederkehrende Termine/Aufgaben**, **generische Push-Erinnerungen (E2EE-konform)**, **eigener Aufgaben-Tab** und **Arbeitsbereich (Kollegen-Notizen + Kundensupport)**; **Bucketlist/Schlaf entfernt**
 

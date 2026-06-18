@@ -59,7 +59,7 @@ export interface ImportResult {
 
 export async function importBackup(input: unknown): Promise<ImportResult> {
 	if (!isBackup(input)) {
-		throw new Error('Keine gültige Alltags-Helfer-Sicherung.');
+		throw new Error('Keine gültige Sphera-Sicherung.');
 	}
 	if (input.schema > BACKUP_SCHEMA) {
 		throw new Error('Die Sicherung stammt aus einer neueren App-Version — bitte erst App aktualisieren.');
