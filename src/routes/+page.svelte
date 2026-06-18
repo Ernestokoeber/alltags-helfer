@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
 	import { addNote, softDeleteNote, notesForDay, openTasks, erledige } from '$lib/db/notes';
-	import { recentSleep, sleepDuration } from '$lib/db/sleep';
 	import { upcomingAppointments } from '$lib/db/appointments';
 	import { relativeDayLabel, tagesgruss } from '$lib/format';
 	import { faelligeErinnerungen } from '$lib/reminders';
-	import type { Appointment, Category, Note, SleepEntry } from '$lib/db/types';
+	import type { Appointment, Category, Note } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
 	import KategorieVorschlag from '$lib/components/KategorieVorschlag.svelte';
@@ -30,15 +29,10 @@
 
 	// Live-Daten fürs Briefing
 	let notizenAlle = $state<Note[]>([]);
-	let schlaf = $state<SleepEntry[]>([]);
 	let termineAlle = $state<Appointment[]>([]);
 	let aufgabenAlle = $state<Note[]>([]);
 	$effect(() => {
 		const s = liveQuery(() => notesForDay(new Date())).subscribe((v) => (notizenAlle = v));
-		return () => s.unsubscribe();
-	});
-	$effect(() => {
-		const s = liveQuery(() => recentSleep(1)).subscribe((v) => (schlaf = v));
 		return () => s.unsubscribe();
 	});
 	$effect(() => {
@@ -53,7 +47,6 @@
 	// Sphären-Sicht: Briefing und Tagesnotizen folgen dem globalen Umschalter.
 	const notizen = $derived(filterBySphere(notizenAlle, sphaere.current));
 	const termine = $derived(filterBySphere(termineAlle, sphaere.current));
-	const letzteNacht = $derived(schlaf[0]);
 	const naechste = $derived(termine.slice(0, 3));
 
 	// In-App-Erinnerungen: überfällige/bald fällige Aufgaben + anstehende Termine
@@ -88,10 +81,6 @@
 
 	function uhrzeit(ms: number): string {
 		return new Date(ms).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-	}
-	function schlafDauer(e: SleepEntry): string {
-		const m = sleepDuration(e.bedTime, e.wakeTime);
-		return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
 	}
 </script>
 
@@ -151,34 +140,17 @@
 	<!-- Ab lg: zweispaltig — Tagesbereich (2/3) + Überblick-Panels (1/3). -->
 	<div class="lg:grid lg:grid-cols-3 lg:items-start lg:gap-5">
 		<div class="space-y-5 lg:col-span-2">
-			<!-- Briefing: letzte Nacht + nächster Termin der aktiven Sphäre -->
-			<div class="grid grid-cols-2 gap-2">
-				<div class="card p-3.5">
-					<p class="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
-						<Icon name="moon" class="h-3.5 w-3.5 text-indigo-300" /> Letzte Nacht
-					</p>
-					{#if letzteNacht}
-						<p class="mt-1.5 text-base font-semibold text-zinc-100">{schlafDauer(letzteNacht)}</p>
-						<div class="mt-0.5 flex gap-0.5 text-amber-300">
-							{#each Array(letzteNacht.quality) as _, i (i)}
-								<Icon name="star" class="h-3 w-3" filled />
-							{/each}
-						</div>
-					{:else}
-						<p class="mt-1.5 text-xs text-zinc-500">Noch kein Eintrag — im Tab „Schlaf“.</p>
-					{/if}
-				</div>
-				<div class="card p-3.5">
-					<p class="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
-						<Icon name="calendar" class="h-3.5 w-3.5 text-teal-300" /> Als Nächstes
-					</p>
-					{#if naechste.length > 0}
-						<p class="mt-1.5 truncate text-base font-semibold text-zinc-100">{naechste[0].title}</p>
-						<p class="text-xs text-zinc-500">{relativeDayLabel(naechste[0].startAt)}</p>
-					{:else}
-						<p class="mt-1.5 text-xs text-zinc-500">Keine Termine.</p>
-					{/if}
-				</div>
+			<!-- Briefing: nächster Termin der aktiven Sphäre -->
+			<div class="card p-3.5">
+				<p class="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+					<Icon name="calendar" class="h-3.5 w-3.5 text-teal-300" /> Als Nächstes
+				</p>
+				{#if naechste.length > 0}
+					<p class="mt-1.5 truncate text-base font-semibold text-zinc-100">{naechste[0].title}</p>
+					<p class="text-xs text-zinc-500">{relativeDayLabel(naechste[0].startAt)}</p>
+				{:else}
+					<p class="mt-1.5 text-xs text-zinc-500">Keine Termine.</p>
+				{/if}
 			</div>
 
 			<!-- Die Brücke zwischen den Sphären: nur in „Alles" sichtbar -->

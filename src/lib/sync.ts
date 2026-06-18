@@ -15,8 +15,6 @@ export const SYNC_TABLES = [
 	'appointments',
 	'prepTasks',
 	'reminders',
-	'bucketItems',
-	'sleepEntries',
 	'timeEntries',
 	'projects'
 ] as const;

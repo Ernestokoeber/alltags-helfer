@@ -1,17 +1,16 @@
 <script lang="ts">
 	// Globales Such-Overlay (von jedem Tab aus). Notiz-Treffer öffnen direkt das
-	// NotizModal; Projekt/Termin/Bucket springen zum jeweiligen Tab.
+	// NotizModal; Projekt/Termin springen zum jeweiligen Tab.
 	import { liveQuery } from 'dexie';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { allNotes } from '$lib/db/notes';
 	import { allProjects } from '$lib/db/projects';
 	import { allAppointments } from '$lib/db/appointments';
-	import { allBucketItems } from '$lib/db/bucket';
 	import { sucheAlles } from '$lib/search';
 	import { tagKey } from '$lib/calendar';
 	import { categoryBadge, categoryLabel } from '$lib/sphere';
-	import type { Note, Project, Appointment, BucketItem } from '$lib/db/types';
+	import type { Note, Project, Appointment } from '$lib/db/types';
 	import Icon from './Icon.svelte';
 	import NotizModal from './NotizModal.svelte';
 
@@ -21,18 +20,16 @@
 	let notizen = $state<Note[]>([]);
 	let projekte = $state<Project[]>([]);
 	let termine = $state<Appointment[]>([]);
-	let bucket = $state<BucketItem[]>([]);
 	$effect(() => {
 		const subs = [
 			liveQuery(() => allNotes()).subscribe((v) => (notizen = v)),
 			liveQuery(() => allProjects()).subscribe((v) => (projekte = v)),
-			liveQuery(() => allAppointments()).subscribe((v) => (termine = v)),
-			liveQuery(() => allBucketItems()).subscribe((v) => (bucket = v))
+			liveQuery(() => allAppointments()).subscribe((v) => (termine = v))
 		];
 		return () => subs.forEach((s) => s.unsubscribe());
 	});
 
-	const treffer = $derived(sucheAlles(q, { notizen, projekte, termine, bucket }));
+	const treffer = $derived(sucheAlles(q, { notizen, projekte, termine }));
 	const projektName = $derived(new Map(projekte.map((p) => [p.id, p.name])));
 
 	// Geöffnete Notiz live aus der Liste → spiegelt Änderungen, schließt bei Löschen.
@@ -85,7 +82,7 @@
 				bind:this={eingabe}
 				bind:value={q}
 				type="search"
-				placeholder="Suchen über Notizen, Projekte, Termine, Bucket …"
+				placeholder="Suchen über Notizen, Projekte, Termine …"
 				class="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
 			/>
 			<button
@@ -146,20 +143,6 @@
 							<Icon name="calendar" class="h-4 w-4 shrink-0 text-zinc-500" />
 							<span class="line-clamp-1 min-w-0 flex-1 text-sm text-zinc-100">{t.title}</span>
 							<span class="shrink-0 text-xs text-zinc-500">{datum(t.startAt)}</span>
-						</button>
-					{/each}
-				{/if}
-
-				{#if treffer.bucket.length}
-					<p class="px-2 pt-2 pb-1 text-xs font-medium text-zinc-500">Bucketlist</p>
-					{#each treffer.bucket as b (b.id)}
-						<button
-							type="button"
-							onclick={() => gehe('/bucketlist')}
-							class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.05]"
-						>
-							<Icon name="sparkles" class="h-4 w-4 shrink-0 text-zinc-500" />
-							<span class="line-clamp-1 min-w-0 flex-1 text-sm text-zinc-100">{b.title}</span>
 						</button>
 					{/each}
 				{/if}

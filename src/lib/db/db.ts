@@ -1,15 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type {
-	Note,
-	Tag,
-	Appointment,
-	PrepTask,
-	Reminder,
-	BucketItem,
-	SleepEntry,
-	TimeEntry,
-	Project
-} from './types';
+import type { Note, Tag, Appointment, PrepTask, Reminder, TimeEntry, Project } from './types';
 
 // Local-first Datenbank (IndexedDB via Dexie). Das Schema ist sync-fähig:
 // '&id' = eigener UUID-Primärschlüssel (kein auto-increment), zusätzliche
@@ -20,8 +10,6 @@ export class AppDB extends Dexie {
 	appointments!: Table<Appointment, string>;
 	prepTasks!: Table<PrepTask, string>;
 	reminders!: Table<Reminder, string>;
-	bucketItems!: Table<BucketItem, string>;
-	sleepEntries!: Table<SleepEntry, string>;
 	timeEntries!: Table<TimeEntry, string>;
 	projects!: Table<Project, string>;
 
@@ -66,6 +54,11 @@ export class AppDB extends Dexie {
 			projects: '&id, name, category, archived, parentId, updatedAt, deletedAt',
 			appointments: '&id, startAt, category, projectId, updatedAt, deletedAt',
 			notes: '&id, category, pinned, projectId, dueAt, createdAt, updatedAt, deletedAt, *tags'
+		});
+		// v5: Bucketlist + Schlaf-Tracking entfernt → Tabellen droppen (Daten gehen verloren).
+		this.version(5).stores({
+			bucketItems: null,
+			sleepEntries: null
 		});
 	}
 }

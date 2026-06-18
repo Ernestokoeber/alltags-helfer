@@ -2,7 +2,7 @@ import type { Category } from './db/types';
 
 // Die „Sphäre" ist der globale Blickwinkel der App: Privat, Arbeit oder Alles.
 // Sie verknüpft beide Lebensbereiche in einer App — ein Umschalter im Header
-// filtert sämtliche Inhalte (Notizen, Termine, Bucketlist, Briefing).
+// filtert sämtliche Inhalte (Notizen, Aufgaben, Termine).
 export type Sphere = 'alles' | 'privat' | 'geschaeftlich';
 
 // Gehört ein Eintrag mit dieser Kategorie in die aktive Sphäre?

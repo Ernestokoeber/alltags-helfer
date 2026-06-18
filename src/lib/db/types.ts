@@ -74,22 +74,6 @@ export interface Reminder extends SyncMeta {
 	status: 'pending' | 'done' | 'dismissed';
 }
 
-export interface BucketItem extends SyncMeta {
-	title: string;
-	description?: string;
-	targetDate?: number;
-	done: boolean;
-	category: Category;
-}
-
-export interface SleepEntry extends SyncMeta {
-	date: string; // YYYY-MM-DD
-	bedTime: string; // HH:MM
-	wakeTime: string; // HH:MM
-	quality: number; // 1..5
-	note?: string;
-}
-
 export interface TimeEntry extends SyncMeta {
 	sourceApp: string;
 	activity: string;

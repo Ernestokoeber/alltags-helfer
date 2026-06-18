@@ -60,13 +60,11 @@
 		{ href: '/notizen', label: 'Notizen', icon: 'note' },
 		{ href: '/aufgaben', label: 'Aufgaben', icon: 'check' },
 		{ href: '/projekte', label: 'Projekte', icon: 'folder' },
-		{ href: '/termine', label: 'Termine', icon: 'calendar' },
-		{ href: '/bucketlist', label: 'Bucket', icon: 'sparkles' },
-		{ href: '/schlaf', label: 'Schlaf', icon: 'moon' }
+		{ href: '/termine', label: 'Termine', icon: 'calendar' }
 	];
 
 	// Sphären-Umschalter: verbindet Privat- und Arbeitsleben in einer App.
-	// Die Wahl filtert alle Inhalte (Notizen, Termine, Bucketlist, Briefing).
+	// Die Wahl filtert alle Inhalte (Notizen, Aufgaben, Termine).
 	const sphären: { wert: Sphere; label: string; icon: IconName; active: string }[] = [
 		{ wert: 'privat', label: 'Privat', icon: 'heart', active: 'bg-amber-400/90 text-zinc-950' },
 		{ wert: 'alles', label: 'Alles', icon: 'layers', active: 'bg-zinc-200 text-zinc-900' },
@@ -86,7 +84,7 @@
 
 	// Kontext-Spalte (ab xl): auf den Listen-Seiten eine schmale Überblick-Spalte.
 	// Auf „Heute" (eigenes Dashboard) und „Einstellungen" bewusst nicht.
-	const railRouten = ['/notizen', '/termine', '/projekte', '/bucketlist', '/schlaf'];
+	const railRouten = ['/notizen', '/termine', '/projekte'];
 	const aktuelleRoute = $derived(page.url.pathname.slice(base.length) || '/');
 	const zeigeRail = $derived(railRouten.includes(aktuelleRoute));
 

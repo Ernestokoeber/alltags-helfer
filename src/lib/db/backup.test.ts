@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db';
 import { addNote, softDeleteNote } from './notes';
 import { addAppointment } from './appointments';
-import { saveSleepEntry } from './sleep';
 import { exportBackup, importBackup, isBackup, BACKUP_APP, BACKUP_SCHEMA } from './backup';
 
 beforeEach(async () => {
@@ -29,17 +28,15 @@ describe('importBackup', () => {
 	it('Roundtrip: Export → leere DB → Import stellt alles wieder her', async () => {
 		await addNote({ content: 'Notiz', category: 'privat' });
 		await addAppointment({ title: 'Zahnarzt', startAt: Date.now() + 1000 });
-		await saveSleepEntry({ date: '2026-06-10', bedTime: '23:00', wakeTime: '07:00', quality: 4 });
 
 		const b = JSON.parse(JSON.stringify(await exportBackup())); // wie aus Datei gelesen
 		await Promise.all(db.tables.map((t) => t.clear()));
 
 		const r = await importBackup(b);
-		expect(r.added).toBe(3);
+		expect(r.added).toBe(2);
 		expect(r.updated).toBe(0);
 		expect(await db.notes.count()).toBe(1);
 		expect(await db.appointments.count()).toBe(1);
-		expect(await db.sleepEntries.count()).toBe(1);
 	});
 
 	it('Last-Write-Wins: neuere Sicherung überschreibt, ältere wird übersprungen', async () => {

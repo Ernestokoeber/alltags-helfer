@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sucheAlles, type SuchDaten } from './search';
-import type { Note, Project, Appointment, BucketItem } from './db/types';
+import type { Note, Project, Appointment } from './db/types';
 
 const META = { createdAt: 0, updatedAt: 0, deletedAt: null as number | null };
 
@@ -13,12 +13,8 @@ function projekt(id: string, name: string, description?: string): Project {
 function termin(id: string, title: string, location?: string): Appointment {
 	return { ...META, id, title, startAt: 0, category: 'offen', location };
 }
-function bucketItem(id: string, title: string, description?: string): BucketItem {
-	return { ...META, id, title, description, done: false, category: 'offen' };
-}
-
 function daten(over: Partial<SuchDaten> = {}): SuchDaten {
-	return { notizen: [], projekte: [], termine: [], bucket: [], ...over };
+	return { notizen: [], projekte: [], termine: [], ...over };
 }
 
 describe('sucheAlles', () => {
@@ -31,15 +27,13 @@ describe('sucheAlles', () => {
 		const d = daten({
 			notizen: [note('n1', 'Server PATCHEN'), note('n2', 'irrelevant', ['wichtig'])],
 			projekte: [projekt('p1', 'ITM', 'Wichtige Sachen')],
-			termine: [termin('t1', 'Meeting', 'Wichtig-Raum')],
-			bucket: [bucketItem('b1', 'Reise', 'wichtige Tour')]
+			termine: [termin('t1', 'Meeting', 'Wichtig-Raum')]
 		});
 		const r = sucheAlles('wichtig', d);
 		expect(r.notizen.map((n) => n.id)).toEqual(['n2']); // Tag-Treffer
 		expect(r.projekte.map((p) => p.id)).toEqual(['p1']);
 		expect(r.termine.map((t) => t.id)).toEqual(['t1']);
-		expect(r.bucket.map((b) => b.id)).toEqual(['b1']);
-		expect(r.anzahl).toBe(4);
+		expect(r.anzahl).toBe(3);
 
 		expect(sucheAlles('patchen', d).notizen.map((n) => n.id)).toEqual(['n1']);
 	});
