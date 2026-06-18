@@ -9,6 +9,7 @@
 	import { allAppointments } from '$lib/db/appointments';
 	import { allBucketItems } from '$lib/db/bucket';
 	import { sucheAlles } from '$lib/search';
+	import { tagKey } from '$lib/calendar';
 	import { categoryBadge, categoryLabel } from '$lib/sphere';
 	import type { Note, Project, Appointment, BucketItem } from '$lib/db/types';
 	import Icon from './Icon.svelte';
@@ -125,7 +126,7 @@
 					{#each treffer.projekte as p (p.id)}
 						<button
 							type="button"
-							onclick={() => gehe('/projekte')}
+							onclick={() => gehe(`/projekte?p=${p.id}`)}
 							class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.05]"
 						>
 							<Icon name="folder" class="h-4 w-4 shrink-0 text-zinc-500" />
@@ -139,7 +140,7 @@
 					{#each treffer.termine as t (t.id)}
 						<button
 							type="button"
-							onclick={() => gehe('/termine')}
+							onclick={() => gehe(`/termine?tag=${tagKey(t.startAt)}`)}
 							class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.05]"
 						>
 							<Icon name="calendar" class="h-4 w-4 shrink-0 text-zinc-500" />

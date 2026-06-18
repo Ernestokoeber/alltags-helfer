@@ -25,6 +25,9 @@
 	import type { Category, Note, Project, Appointment } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
+	import { base } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
 
 	// --- Live-Datenquellen ---
@@ -56,6 +59,16 @@
 	// Verschwindet das offene Projekt (gelöscht), zurück nach oben.
 	$effect(() => {
 		if (openId && !projekte.some((p) => p.id === openId)) openId = null;
+	});
+
+	// Deep-Link aus der Suche (?p=<id>): Projekt öffnen, Param danach entfernen,
+	// damit spätere Navigation im Baum nicht zurückgesetzt wird.
+	$effect(() => {
+		const p = page.url.searchParams.get('p');
+		if (p && projekte.some((x) => x.id === p)) {
+			openId = p;
+			replaceState(`${base}/projekte`, {});
+		}
 	});
 
 	// Breadcrumb-Pfad: Wurzel … aktuelles Projekt (mit Zyklus-Schutz).

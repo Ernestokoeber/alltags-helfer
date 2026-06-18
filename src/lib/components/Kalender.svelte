@@ -9,7 +9,7 @@
 	import Icon from './Icon.svelte';
 	import TerminModal from './TerminModal.svelte';
 
-	let { termine }: { termine: Appointment[] } = $props();
+	let { termine, initialTag }: { termine: Appointment[]; initialTag?: string } = $props();
 
 	const DAY = 86_400_000;
 	const heute = new Date();
@@ -18,6 +18,16 @@
 	let jahr = $state(heute.getFullYear());
 	let monat = $state(heute.getMonth());
 	let ausgewaehlt = $state(tagKey(heute));
+
+	// Deep-Link aus der Suche (?tag=YYYY-MM-DD): Tag vorselektieren + Monat öffnen.
+	$effect(() => {
+		if (!initialTag) return;
+		const [y, m, t] = initialTag.split('-').map(Number);
+		if (!y || !m || !t) return;
+		ausgewaehlt = initialTag;
+		jahr = y;
+		monat = m - 1;
+	});
 
 	const tage = $derived(monatsTage(jahr, monat));
 	const von = $derived(tage[0].getTime());

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
+	import { page } from '$app/state';
 	import { addAppointment, allAppointments } from '$lib/db/appointments';
 	import { pickerProjects, type ProjectOption } from '$lib/db/projects';
 	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
@@ -7,6 +8,9 @@
 	import type { Appointment, Category, Recurrence } from '$lib/db/types';
 	import { categoryLabel, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
+
+	// Deep-Link aus der Suche: ?tag=YYYY-MM-DD wählt den Tag im Kalender vor.
+	const startTag = $derived(page.url.searchParams.get('tag') ?? undefined);
 
 	let alle = $state<Appointment[]>([]);
 	$effect(() => {
@@ -116,5 +120,5 @@
 		</div>
 	</div>
 
-	<Kalender termine={sichtbar} />
+	<Kalender termine={sichtbar} initialTag={startTag} />
 </section>
