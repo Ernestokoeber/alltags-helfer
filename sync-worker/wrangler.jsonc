@@ -12,5 +12,12 @@
 			"database_name": "alltags-helfer",
 			"database_id": "dbfa745f-1149-4a2b-b645-7cd5bea4760d"
 		}
-	]
+	],
+	// Generische Push-Erinnerungen: VAPID-Public-Key + Subject sind öffentlich;
+	// der private Schlüssel liegt als Secret VAPID_PRIVATE_JWK. Cron prüft alle 15 Min.
+	"vars": {
+		"VAPID_PUBLIC": "BH673Yw7zDJPL3_CRScYeFpkkAY2o5bpvUqiSx3Hj8AVjWRNs1yQMd1o4L1rJ18kpAWkW5xJnF4yWhQQ7PuEROg",
+		"VAPID_SUBJECT": "https://ernestokoeber.github.io/alltags-helfer"
+	},
+	"triggers": { "crons": ["*/15 * * * *"] }
 }

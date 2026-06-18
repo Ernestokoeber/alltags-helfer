@@ -1,6 +1,6 @@
 # Geräte-Sync — Plan & Stand
 
-> **Stand:** 2026-06-17 · **Status:** umgesetzt & verifiziert (Worker live, App-Client fertig). Bereit für den End-to-End-Test Handy ⇄ PC.
+> **Stand:** 2026-06-18 · **Status:** umgesetzt & **Handy ⇄ PC bestätigt**. Ergänzt: **generische Push-Erinnerungen** (E2EE-konform, Cron).
 > Echter automatischer Abgleich (Handy ⇄ PC) mit **Ende-zu-Ende-Verschlüsselung**.
 
 ---
@@ -47,7 +47,8 @@
 - [x] **Phase 1** — D1 + Worker deployt, per curl verifiziert (Health, 401, Push/Pull-Roundtrip).
 - [x] **Phase 2** — Krypto + Sync-Client (TDD: crypto/sync-Tests grün).
 - [x] **Phase 3** — UI in „Einstellungen" + Auto-Sync.
-- [ ] **Phase 4** — End-to-End Handy ⇄ PC (Notiz/Termin/Löschung), nach Live-Deploy. ← *nächster Schritt mit dem Nutzer*
+- [x] **Phase 4** — End-to-End Handy ⇄ PC **bestätigt** (Nutzer).
+- [x] **Phase 5** — Generische Push-Erinnerungen (Worker-Cron + VAPID + Client), siehe §7.
 
 ## 5. Betrieb / Wartung
 
@@ -62,3 +63,12 @@
 - **Falsches E2EE-Passwort** → Entschlüsselung schlägt fehl, klare Fehlermeldung, **keine** kaputten Daten (Verifier-Record erkennt es früh).
 - **Metadaten** (Anzahl/Zeitstempel/Typen) sieht der Server; **Inhalte** nie.
 - **Salt-Race** nur theoretisch, wenn zwei Geräte gleichzeitig erstmalig syncen → daher Gerät 1 vor Gerät 2 einrichten.
+
+## 7. Push-Erinnerungen (generisch, E2EE-konform)
+
+- **Idee:** E2EE ⇒ der Server kennt keine Inhalte. Daher lädt der Client nur **Erinnerungs-ZEITEN** hoch (kein Text); ein Cron schickt bei Fälligkeit eine **generische** Benachrichtigung („Du hast etwas Fälliges"). Details erst beim Öffnen der App.
+- **Worker:** `POST /push/subscribe` (Endpoint je Gerät), `POST /push/reminders` (Zeitplan ersetzen), `scheduled()`-Cron `*/15 * * * *` (sendet bei fälligen Zeiten seit `last_run` an alle Abos; räumt 404/410-Abos auf). D1-Tabellen `push_subs`, `reminders`, `push_state`. **Payload-lose** Web-Push mit **VAPID** (ES256-JWT via Web Crypto) — keine Nutzlast-Verschlüsselung nötig.
+- **VAPID-Schlüssel:** Public Key (öffentlich) in `wrangler.jsonc` (`VAPID_PUBLIC`) **und** Client (`push.ts`); `VAPID_SUBJECT` = https-URL. **Private Key** als Worker-**Secret** `VAPID_PRIVATE_JWK` (JWK) — Quelle **nur** in der VM unter `~/.vapid_jwk`, nirgendwo sonst (nicht im Repo). Neu erzeugen: P-256-Keypair (Web Crypto), Public→raw-base64url, Private→JWK.
+- **Client:** `src/lib/push.ts` (Abo + reine `erinnerungsZeiten()` aus Aufgaben-Fristen/Terminen inkl. Wiederholung, mit Vorlauf), Service-Worker `push`/`notificationclick`, Schalter in „Einstellungen". Plan-Refresh nach jedem Sync (`sync-state`).
+- **Betrieb:** Secret setzen `cat ~/.vapid_jwk | npx wrangler secret put VAPID_PRIVATE_JWK`; Cron + Vars stehen in `wrangler.jsonc` (kommen beim `wrangler deploy` mit). Abos prüfen: `npx wrangler d1 execute alltags-helfer --remote --command "SELECT COUNT(*) FROM push_subs"`.
+- **iPhone:** Web-Push nur als **installierte PWA** (Home-Bildschirm), iOS ≥ 16.4; Benachrichtigungen müssen erlaubt werden.

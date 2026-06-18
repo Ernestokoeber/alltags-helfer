@@ -1,9 +1,9 @@
-// Cloudflare Worker: Geräte-Sync-API für den Alltags-Helfer.
+// Cloudflare Worker: Geräte-Sync-API + generische Push-Erinnerungen für den Alltags-Helfer.
 //
-// Speichert pro Datensatz nur ein opakes (Ende-zu-Ende-verschlüsseltes) Blob plus
-// Sync-Metadaten in D1. Ein Endpoint `POST /sync` macht Pull + Push (Last-Write-Wins)
-// in einem Round-Trip. Der Worker kennt weder Klartext noch Schlüssel — die
-// Verschlüsselung passiert ausschließlich im Client.
+// Sync speichert pro Datensatz nur ein opakes (Ende-zu-Ende-verschlüsseltes) Blob plus
+// Sync-Metadaten in D1. `POST /sync` macht Pull + Push (Last-Write-Wins) in einem Round-Trip.
+// Push speichert nur Abo-Endpoints und Erinnerungs-ZEITEN (kein Inhalt!) — ein Cron schickt
+// bei Fälligkeit eine *generische* Benachrichtigung. Der Worker kennt nie Klartext/Schlüssel.
 
 // Minimale D1-Typen statt @cloudflare/workers-types (hält den Worker dependency-frei).
 interface D1Result<T> {
@@ -17,10 +17,14 @@ interface D1PreparedStatement {
 }
 interface D1Database {
 	prepare(query: string): D1PreparedStatement;
+	batch(statements: D1PreparedStatement[]): Promise<unknown>;
 }
 interface Env {
 	DB: D1Database;
 	SYNC_SECRET: string;
+	VAPID_PUBLIC: string; // öffentlicher VAPID-Key (auch im Client)
+	VAPID_SUBJECT: string; // mailto:… Kontakt für Push-Dienste
+	VAPID_PRIVATE_JWK: string; // privater Key als JWK-JSON (Secret)
 }
 
 type Change = {
@@ -65,6 +69,48 @@ function json(body: unknown, status: number, cors: Record<string, string>): Resp
 	});
 }
 
+// --- VAPID / Web-Push (payload-los, RFC 8292) ---
+function b64urlFromString(s: string): string {
+	return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlFromBytes(bytes: Uint8Array): string {
+	let s = '';
+	for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+	return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Baut den VAPID-Authorization-Header (signiertes JWT, ES256) für einen Push-Dienst.
+async function vapidAuthHeader(aud: string, env: Env): Promise<string> {
+	const header = b64urlFromString(JSON.stringify({ typ: 'JWT', alg: 'ES256' }));
+	const payload = b64urlFromString(
+		JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.VAPID_SUBJECT })
+	);
+	const signingInput = `${header}.${payload}`;
+	const key = await crypto.subtle.importKey(
+		'jwk',
+		JSON.parse(env.VAPID_PRIVATE_JWK),
+		{ name: 'ECDSA', namedCurve: 'P-256' },
+		false,
+		['sign']
+	);
+	const sig = new Uint8Array(
+		await crypto.subtle.sign(
+			{ name: 'ECDSA', hash: 'SHA-256' },
+			key,
+			new TextEncoder().encode(signingInput)
+		)
+	);
+	return `vapid t=${signingInput}.${b64urlFromBytes(sig)}, k=${env.VAPID_PUBLIC}`;
+}
+
+// Sendet eine payload-lose Push an einen Endpoint und liefert den HTTP-Status.
+async function sendPush(endpoint: string, env: Env): Promise<number> {
+	const aud = new URL(endpoint).origin;
+	const auth = await vapidAuthHeader(aud, env);
+	const res = await fetch(endpoint, { method: 'POST', headers: { Authorization: auth, TTL: '86400' } });
+	return res.status;
+}
+
 export default {
 	async fetch(req: Request, env: Env): Promise<Response> {
 		const cors = corsHeaders(req.headers.get('Origin'));
@@ -76,15 +122,54 @@ export default {
 		if (url.pathname === '/' || url.pathname === '/health') {
 			return json({ ok: true }, 200, cors);
 		}
-		if (req.method !== 'POST' || url.pathname !== '/sync') {
-			return json({ error: 'not found' }, 404, cors);
-		}
 
-		// Authentifizierung: Bearer-Token muss dem Worker-Secret entsprechen.
+		// Authentifizierung: Bearer-Token muss dem Worker-Secret entsprechen (alle Endpoints).
 		const auth = req.headers.get('Authorization') ?? '';
 		const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
 		if (!env.SYNC_SECRET || !sicherGleich(token, env.SYNC_SECRET)) {
 			return json({ error: 'unauthorized' }, 401, cors);
+		}
+
+		// --- Push-Abo registrieren (nur Endpoint, kein Inhalt) ---
+		if (req.method === 'POST' && url.pathname === '/push/subscribe') {
+			let b: { endpoint?: string };
+			try {
+				b = (await req.json()) as { endpoint?: string };
+			} catch {
+				return json({ error: 'bad json' }, 400, cors);
+			}
+			if (!b.endpoint || typeof b.endpoint !== 'string') {
+				return json({ error: 'no endpoint' }, 400, cors);
+			}
+			await env.DB.prepare(
+				'INSERT INTO push_subs (endpoint, created_at) VALUES (?, ?) ON CONFLICT(endpoint) DO NOTHING'
+			)
+				.bind(b.endpoint, Date.now())
+				.run();
+			return json({ ok: true }, 200, cors);
+		}
+
+		// --- Erinnerungs-Zeitplan ersetzen (nur Zeiten, kein Inhalt) ---
+		if (req.method === 'POST' && url.pathname === '/push/reminders') {
+			let b: { times?: number[] };
+			try {
+				b = (await req.json()) as { times?: number[] };
+			} catch {
+				return json({ error: 'bad json' }, 400, cors);
+			}
+			const times = Array.isArray(b.times)
+				? b.times.filter((t) => Number.isFinite(t)).slice(0, 1000)
+				: [];
+			const stmts: D1PreparedStatement[] = [env.DB.prepare('DELETE FROM reminders')];
+			for (const t of times) {
+				stmts.push(env.DB.prepare('INSERT INTO reminders (at) VALUES (?)').bind(Number(t)));
+			}
+			await env.DB.batch(stmts);
+			return json({ ok: true, count: times.length }, 200, cors);
+		}
+
+		if (req.method !== 'POST' || url.pathname !== '/sync') {
+			return json({ error: 'not found' }, 404, cors);
 		}
 
 		let body: { since?: number; changes?: Change[] };
@@ -153,5 +238,41 @@ export default {
 			200,
 			cors
 		);
+	},
+
+	// Cron-Trigger: fällige Erinnerungen seit dem letzten Lauf → eine generische Push.
+	async scheduled(_event: unknown, env: Env): Promise<void> {
+		const now = Date.now();
+		const stateRow = await env.DB.prepare("SELECT v FROM push_state WHERE k = 'last_run'").first<{
+			v: string;
+		}>();
+		const lastRun = stateRow ? Number(stateRow.v) : now - 16 * 60 * 1000;
+
+		const dueRow = await env.DB.prepare('SELECT COUNT(*) AS n FROM reminders WHERE at > ? AND at <= ?')
+			.bind(lastRun, now)
+			.first<{ n: number }>();
+
+		if ((dueRow?.n ?? 0) > 0) {
+			const subs = (
+				await env.DB.prepare('SELECT endpoint FROM push_subs').all<{ endpoint: string }>()
+			).results;
+			for (const s of subs) {
+				try {
+					const status = await sendPush(s.endpoint, env);
+					// 404/410 = Abo abgelaufen/entfernt → aufräumen.
+					if (status === 404 || status === 410) {
+						await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ?').bind(s.endpoint).run();
+					}
+				} catch {
+					/* einzelnes Abo-Versagen ignorieren, andere weiter bedienen */
+				}
+			}
+		}
+
+		await env.DB.prepare(
+			"INSERT INTO push_state (k, v) VALUES ('last_run', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v"
+		)
+			.bind(String(now))
+			.run();
 	}
 };

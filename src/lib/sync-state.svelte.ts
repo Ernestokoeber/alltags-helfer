@@ -2,6 +2,7 @@
 // Button (Einstellungen). Entkoppelt Auslöser von der Anzeige; ein laufender Sync
 // wird nicht doppelt gestartet.
 import { runSync, isConfigured, lastSyncAt } from './sync';
+import { aktualisiereErinnerungsplan } from './push';
 
 let running = false;
 
@@ -29,6 +30,8 @@ class SyncState {
 			this.status = 'ok';
 			this.lastAt = lastSyncAt();
 			this.message = `${r.gepusht} gesendet · ${r.angewendet} empfangen`;
+			// Push-Erinnerungszeiten im Hintergrund auffrischen (nur falls abonniert).
+			void aktualisiereErinnerungsplan();
 		} catch (e) {
 			this.status = 'error';
 			this.message = e instanceof Error ? e.message : 'Sync fehlgeschlagen.';

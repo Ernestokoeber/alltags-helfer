@@ -3,6 +3,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { syncState } from '$lib/sync-state.svelte';
 	import { loadConfig, saveConfig, isConfigured } from '$lib/sync';
+	import { pushUnterstuetzt, istAbonniert, aktivierePush } from '$lib/push';
 
 	// Export: Sicherung als JSON-Datei herunterladen.
 	async function exportieren() {
@@ -60,6 +61,27 @@
 			hour: '2-digit',
 			minute: '2-digit'
 		});
+	}
+
+	// --- Push-Benachrichtigungen ---
+	let pushVerfuegbar = $state(false);
+	let pushAktiv = $state(false);
+	let pushLaedt = $state(false);
+	let pushFehler = $state('');
+	$effect(() => {
+		pushVerfuegbar = pushUnterstuetzt();
+		if (pushVerfuegbar) istAbonniert().then((v) => (pushAktiv = v));
+	});
+	async function pushAktivieren() {
+		pushFehler = '';
+		pushLaedt = true;
+		try {
+			pushAktiv = await aktivierePush();
+		} catch (e) {
+			pushFehler = e instanceof Error ? e.message : 'Aktivieren fehlgeschlagen.';
+		} finally {
+			pushLaedt = false;
+		}
 	}
 </script>
 
@@ -196,6 +218,48 @@
 			</p>
 		{:else if syncState.lastAt}
 			<p class="text-xs text-zinc-500">Zuletzt synchronisiert: {syncZeit(syncState.lastAt)}</p>
+		{/if}
+	</div>
+
+	<div class="card space-y-3 p-4">
+		<h3 class="text-sm font-medium text-zinc-300">Push-Benachrichtigungen</h3>
+		<p class="text-xs leading-relaxed text-zinc-500">
+			Erinnert dich auch bei <strong class="text-zinc-300">geschlossener App</strong> an fällige
+			Aufgaben und Termine. Aus Datenschutzgründen <strong class="text-zinc-300">generisch</strong>
+			(ohne Inhalt) — der Server kennt nur die Zeiten, nie den Text. Voraussetzung: Geräte-Sync
+			eingerichtet. Auf dem iPhone nur als installierte App (zum Home-Bildschirm hinzugefügt).
+		</p>
+
+		{#if !pushVerfuegbar}
+			<p class="text-xs text-zinc-500">Dieses Gerät/dieser Browser unterstützt keine Web-Push.</p>
+		{:else if !eingerichtet}
+			<p class="text-xs text-zinc-500">Richte zuerst oben den Geräte-Sync ein.</p>
+		{:else if pushAktiv}
+			<p
+				role="status"
+				class="flex items-center gap-2 rounded-xl border border-teal-400/25 bg-teal-400/10 px-3 py-2 text-xs text-teal-200"
+			>
+				<Icon name="check" class="h-4 w-4" /> Push-Erinnerungen sind auf diesem Gerät aktiv.
+			</p>
+		{:else}
+			<button
+				type="button"
+				onclick={pushAktivieren}
+				disabled={pushLaedt}
+				class="btn-primary flex items-center gap-2"
+			>
+				<Icon name="bell" class="h-4 w-4" />
+				{pushLaedt ? 'Aktiviere …' : 'Push aktivieren'}
+			</button>
+		{/if}
+
+		{#if pushFehler}
+			<p
+				role="alert"
+				class="rounded-xl border border-rose-400/25 bg-rose-400/10 px-3 py-2 text-xs text-rose-200"
+			>
+				{pushFehler}
+			</p>
 		{/if}
 	</div>
 </section>

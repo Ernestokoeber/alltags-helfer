@@ -86,3 +86,32 @@ sw.addEventListener('fetch', (event) => {
 
 	event.respondWith(respond());
 });
+
+// --- Generische Push-Erinnerungen (ohne Inhalt, E2EE-konform) ---
+// Der Server schickt eine payload-lose Push; wir zeigen einen festen, generischen
+// Text. Details sieht man erst beim Öffnen der App (In-App-Erinnerungen).
+sw.addEventListener('push', (event) => {
+	event.waitUntil(
+		sw.registration.showNotification('Alltags-Helfer', {
+			body: 'Du hast eine fällige Erinnerung.',
+			icon: `${base}/icons/icon-192.png`,
+			badge: `${base}/icons/icon-192.png`,
+			tag: 'alltags-helfer-erinnerung'
+		})
+	);
+});
+
+// Tippen auf die Benachrichtigung: vorhandenes App-Fenster fokussieren, sonst öffnen.
+sw.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	event.waitUntil(
+		(async () => {
+			const fenster = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
+			if (fenster.length > 0) {
+				await (fenster[0] as WindowClient).focus();
+				return;
+			}
+			if (sw.clients.openWindow) await sw.clients.openWindow(`${base}/`);
+		})()
+	);
+});
