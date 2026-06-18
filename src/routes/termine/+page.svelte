@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { liveQuery } from 'dexie';
-	import { addAppointment, upcomingAppointments, deleteAppointment } from '$lib/db/appointments';
+	import { addAppointment, allAppointments } from '$lib/db/appointments';
 	import { pickerProjects, type ProjectOption } from '$lib/db/projects';
-	import Vorbereitung from '$lib/components/Vorbereitung.svelte';
 	import ProjektSelect from '$lib/components/ProjektSelect.svelte';
-	import Icon from '$lib/components/Icon.svelte';
-	import type { Appointment, Category } from '$lib/db/types';
-	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
+	import Kalender from '$lib/components/Kalender.svelte';
+	import type { Appointment, Category, Recurrence } from '$lib/db/types';
+	import { categoryLabel, categoryChipActive, filterBySphere } from '$lib/sphere';
 	import { sphaere } from '$lib/sphere-state.svelte';
 
 	let alle = $state<Appointment[]>([]);
 	$effect(() => {
-		const sub = liveQuery(() => upcomingAppointments()).subscribe((v) => (alle = v));
+		const sub = liveQuery(() => allAppointments()).subscribe((v) => (alle = v));
 		return () => sub.unsubscribe();
 	});
 	// Termine folgen der globalen Sphäre (Privat/Arbeit/Alles).
-	const liste = $derived(filterBySphere(alle, sphaere.current));
+	const sichtbar = $derived(filterBySphere(alle, sphaere.current));
 
 	let titel = $state('');
 	let wann = $state('');
@@ -26,6 +25,15 @@
 		kategorie = sphaere.current === 'alles' ? 'offen' : sphaere.current;
 	});
 	const kategorien: Category[] = ['privat', 'geschaeftlich', 'offen'];
+
+	// Wiederholung (Einmalig = keine).
+	let wiederholung = $state<Recurrence | 'none'>('none');
+	const wiederholungen: { wert: Recurrence | 'none'; label: string }[] = [
+		{ wert: 'none', label: 'Einmalig' },
+		{ wert: 'daily', label: 'Täglich' },
+		{ wert: 'weekly', label: 'Wöchentlich' },
+		{ wert: 'monthly', label: 'Monatlich' }
+	];
 
 	// Auswahlbare Projekte (nur Blätter, mit Pfad) für die optionale Zuordnung.
 	let projektOptionen = $state<ProjectOption[]>([]);
@@ -46,21 +54,13 @@
 			startAt: ms,
 			location: ort,
 			category: proj?.category ?? kategorie,
-			projectId: proj?.id
+			projectId: proj?.id,
+			recurrence: wiederholung === 'none' ? undefined : wiederholung
 		});
 		titel = '';
 		wann = '';
 		ort = '';
-	}
-
-	function fmt(ms: number): string {
-		return new Date(ms).toLocaleString('de-DE', {
-			weekday: 'short',
-			day: '2-digit',
-			month: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
+		wiederholung = 'none';
 	}
 </script>
 
@@ -75,6 +75,24 @@
 		</label>
 		<input bind:value={ort} placeholder="Ort (optional)" class="field" />
 		<ProjektSelect bind:value={projektId} options={projektOptionen} label="Projekt für Termin" />
+
+		<!-- Wiederholung -->
+		<div class="flex flex-col gap-1 text-xs text-zinc-400">
+			<span>Wiederholung</span>
+			<div class="flex flex-wrap gap-1" role="group" aria-label="Wiederholung wählen">
+				{#each wiederholungen as w (w.wert)}
+					<button
+						type="button"
+						onclick={() => (wiederholung = w.wert)}
+						aria-pressed={wiederholung === w.wert}
+						class="chip px-2.5 {wiederholung === w.wert ? 'bg-zinc-100 text-zinc-900' : 'chip-idle'}"
+					>
+						{w.label}
+					</button>
+				{/each}
+			</div>
+		</div>
+
 		<div class="flex items-center justify-between gap-2">
 			{#if projektId}
 				<span class="text-xs text-zinc-500">Kategorie folgt dem Projekt</span>
@@ -92,54 +110,11 @@
 					{/each}
 				</div>
 			{/if}
-			<button
-				type="button"
-				onclick={anlegen}
-				disabled={!titel.trim() || !wann}
-				class="btn-primary"
-			>
+			<button type="button" onclick={anlegen} disabled={!titel.trim() || !wann} class="btn-primary">
 				Anlegen
 			</button>
 		</div>
 	</div>
 
-	<div class="space-y-2">
-		<h3 class="px-1 text-sm font-medium text-zinc-300">Anstehend</h3>
-		{#if liste.length === 0}
-			<p class="px-1 text-sm text-zinc-500">Keine anstehenden Termine in dieser Sicht.</p>
-		{/if}
-		<div class="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-			{#each liste as t (t.id)}
-				<div class="card p-3.5">
-					<div class="flex items-start justify-between gap-3">
-						<div class="min-w-0">
-							<div class="flex items-center gap-2">
-								<p class="truncate text-sm font-medium text-zinc-100">{t.title}</p>
-								<span class="chip shrink-0 px-2 py-0.5 {categoryBadge[t.category]}"
-									>{categoryLabel[t.category]}</span
-								>
-							</div>
-							<p class="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
-								<Icon name="clock" class="h-3.5 w-3.5" />
-								{fmt(t.startAt)}
-								{#if t.location}
-									<Icon name="mapPin" class="ml-1 h-3.5 w-3.5" />
-									{t.location}
-								{/if}
-							</p>
-						</div>
-						<button
-							type="button"
-							onclick={() => deleteAppointment(t.id)}
-							aria-label="Löschen"
-							class="shrink-0 text-zinc-600 transition-colors hover:text-rose-400"
-						>
-							<Icon name="x" class="h-4 w-4" />
-						</button>
-					</div>
-					<Vorbereitung appointmentId={t.id} />
-				</div>
-			{/each}
-		</div>
-	</div>
+	<Kalender termine={sichtbar} />
 </section>

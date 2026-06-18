@@ -11,6 +11,9 @@ export interface SyncMeta {
 
 export type Category = 'privat' | 'geschaeftlich' | 'offen';
 
+// Wiederholungsrhythmus für Termine; fehlt = einmalig.
+export type Recurrence = 'daily' | 'weekly' | 'monthly';
+
 export interface Note extends SyncMeta {
 	content: string;
 	type: 'text' | 'voice';
@@ -47,6 +50,8 @@ export interface Appointment extends SyncMeta {
 	description?: string;
 	reminderLead?: number; // Minuten vor startAt
 	projectId?: string; // optional einem Projekt zugeordnet (seit v4)
+	recurrence?: Recurrence; // Wiederholung; fehlt = einmalig (seit 2026-06-18)
+	recurrenceUntil?: number | null; // optionales Ende der Wiederholung (null/fehlt = unbegrenzt)
 }
 
 export interface PrepTask extends SyncMeta {

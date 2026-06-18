@@ -46,3 +46,23 @@ describe('Termine-Seite – Projektzuordnung', () => {
 		});
 	});
 });
+
+describe('Termine-Seite – Wiederholung', () => {
+	it('legt einen täglich wiederkehrenden Termin an', async () => {
+		render(Page);
+
+		await fireEvent.input(screen.getByPlaceholderText('Titel'), { target: { value: 'Standup' } });
+		await fireEvent.input(screen.getByLabelText('Wann'), {
+			target: { value: '2026-07-01T09:00' }
+		});
+		const grp = screen.getByRole('group', { name: 'Wiederholung wählen' });
+		await fireEvent.click(within(grp).getByRole('button', { name: 'Täglich' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
+
+		await waitFor(async () => {
+			const apps = await db.appointments.toArray();
+			expect(apps).toHaveLength(1);
+			expect(apps[0].recurrence).toBe('daily');
+		});
+	});
+});

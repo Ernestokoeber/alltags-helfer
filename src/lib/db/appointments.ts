@@ -1,5 +1,5 @@
 import { db, uuid } from './db';
-import type { Appointment, Category } from './types';
+import type { Appointment, Category, Recurrence } from './types';
 
 export async function addAppointment(input: {
 	title: string;
@@ -9,6 +9,8 @@ export async function addAppointment(input: {
 	description?: string;
 	reminderLead?: number;
 	projectId?: string;
+	recurrence?: Recurrence;
+	recurrenceUntil?: number | null;
 }): Promise<Appointment> {
 	const now = Date.now();
 	const termin: Appointment = {
@@ -20,6 +22,8 @@ export async function addAppointment(input: {
 		description: input.description?.trim() || undefined,
 		reminderLead: input.reminderLead,
 		projectId: input.projectId,
+		recurrence: input.recurrence,
+		recurrenceUntil: input.recurrenceUntil ?? null,
 		createdAt: now,
 		updatedAt: now,
 		deletedAt: null

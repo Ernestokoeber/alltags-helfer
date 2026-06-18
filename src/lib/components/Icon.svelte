@@ -92,7 +92,8 @@
 			'M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242',
 			'M16 17H7',
 			'M17 21H9'
-		]
+		],
+		repeat: ['m17 2 4 4-4 4', 'M3 11v-1a4 4 0 0 1 4-4h14', 'm7 22-4-4 4-4', 'M21 13v1a4 4 0 0 1-4 4H3']
 	} as const;
 
 	export type IconName = keyof typeof paths;
