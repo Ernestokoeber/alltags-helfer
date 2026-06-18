@@ -74,6 +74,29 @@ export interface Reminder extends SyncMeta {
 	status: 'pending' | 'done' | 'dismissed';
 }
 
+// --- Arbeitsbereich: Kollegen-Notizen + Kundensupport (standalone, nur Arbeit) ---
+
+// Kollege = Empfänger einer Notiz. Editierbare Liste, vorbefüllt mit dem Team.
+export interface Colleague extends SyncMeta {
+	name: string;
+}
+
+// Notiz für einen Kollegen (Notepad bei Anrufen/Support).
+export interface ColleagueNote extends SyncMeta {
+	colleagueId: string;
+	content: string;
+	done: boolean; // weitergegeben/erledigt
+}
+
+// Kundensupport-Fall: Problem zuerst erfassen, Lösung wird nachgetragen.
+export interface SupportCase extends SyncMeta {
+	customer: string;
+	problem: string;
+	solution?: string;
+	status: 'offen' | 'geloest';
+	resolvedAt?: number | null;
+}
+
 export interface TimeEntry extends SyncMeta {
 	sourceApp: string;
 	activity: string;

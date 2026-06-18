@@ -1,5 +1,16 @@
 import Dexie, { type Table } from 'dexie';
-import type { Note, Tag, Appointment, PrepTask, Reminder, TimeEntry, Project } from './types';
+import type {
+	Note,
+	Tag,
+	Appointment,
+	PrepTask,
+	Reminder,
+	TimeEntry,
+	Project,
+	Colleague,
+	ColleagueNote,
+	SupportCase
+} from './types';
 
 // Local-first Datenbank (IndexedDB via Dexie). Das Schema ist sync-fähig:
 // '&id' = eigener UUID-Primärschlüssel (kein auto-increment), zusätzliche
@@ -12,6 +23,9 @@ export class AppDB extends Dexie {
 	reminders!: Table<Reminder, string>;
 	timeEntries!: Table<TimeEntry, string>;
 	projects!: Table<Project, string>;
+	colleagues!: Table<Colleague, string>;
+	colleagueNotes!: Table<ColleagueNote, string>;
+	supportCases!: Table<SupportCase, string>;
 
 	constructor() {
 		super('alltags-helfer');
@@ -59,6 +73,12 @@ export class AppDB extends Dexie {
 		this.version(5).stores({
 			bucketItems: null,
 			sleepEntries: null
+		});
+		// v6: Arbeitsbereich — Kollegen-Notizen + Kundensupport.
+		this.version(6).stores({
+			colleagues: '&id, name, updatedAt, deletedAt',
+			colleagueNotes: '&id, colleagueId, done, createdAt, updatedAt, deletedAt',
+			supportCases: '&id, status, createdAt, updatedAt, deletedAt'
 		});
 	}
 }

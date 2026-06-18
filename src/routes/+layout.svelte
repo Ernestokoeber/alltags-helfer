@@ -60,7 +60,8 @@
 		{ href: '/notizen', label: 'Notizen', icon: 'note' },
 		{ href: '/aufgaben', label: 'Aufgaben', icon: 'check' },
 		{ href: '/projekte', label: 'Projekte', icon: 'folder' },
-		{ href: '/termine', label: 'Termine', icon: 'calendar' }
+		{ href: '/termine', label: 'Termine', icon: 'calendar' },
+		{ href: '/arbeit', label: 'Arbeit', icon: 'briefcase' }
 	];
 
 	// Sphären-Umschalter: verbindet Privat- und Arbeitsleben in einer App.
