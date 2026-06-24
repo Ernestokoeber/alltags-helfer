@@ -3,6 +3,7 @@
 	import { addNote, softDeleteNote, notesForDay, openTasks, erledige } from '$lib/db/notes';
 	import { upcomingAppointments } from '$lib/db/appointments';
 	import { relativeDayLabel, tagesgruss } from '$lib/format';
+	import { tagestipp } from '$lib/tips';
 	import { faelligeErinnerungen } from '$lib/reminders';
 	import type { Appointment, Category, Note } from '$lib/db/types';
 	import { categoryLabel, categoryBadge, categoryChipActive, filterBySphere } from '$lib/sphere';
@@ -64,6 +65,36 @@
 	const naechstePrivat = $derived(termineAlle.find((t) => t.category === 'privat'));
 	const naechsteArbeit = $derived(termineAlle.find((t) => t.category === 'geschaeftlich'));
 
+	// Sanfter Tagestipp (Entschleunigung): folgt der Sphäre (offene Aufgaben/Termine)
+	// und der Tageszeit. Pro Tag ausblendbar — der Schlüssel ist das lokale Datum.
+	const heuteKey = $derived(
+		`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+	);
+	const tipp = $derived(
+		tagestipp({
+			now,
+			offeneAufgaben: filterBySphere(aufgabenAlle, sphaere.current).length,
+			anstehendeTermine: termine.length
+		})
+	);
+	// Client-only aus localStorage: heute schon ausgeblendet? (reagiert auf Tageswechsel)
+	let tippWeg = $state(false);
+	$effect(() => {
+		try {
+			tippWeg = localStorage.getItem('tip.dismissed') === heuteKey;
+		} catch {
+			// localStorage evtl. blockiert → Tipp bleibt sichtbar.
+		}
+	});
+	function tippAusblenden() {
+		try {
+			localStorage.setItem('tip.dismissed', heuteKey);
+		} catch {
+			// ignorieren — dann eben nur für diese Sitzung ausgeblendet.
+		}
+		tippWeg = true;
+	}
+
 	// Schnellnotiz: Kategorie folgt der aktiven Sphäre als sinnvoller Vorgabe.
 	let text = $state('');
 	let category = $state<Category>(sphaere.current === 'alles' ? 'offen' : sphaere.current);
@@ -99,6 +130,24 @@
 			<Wetter />
 		</div>
 	</div>
+
+	<!-- Sanfter Tagestipp (Entschleunigung) — dezent, pro Tag ausblendbar -->
+	{#if tipp && !tippWeg}
+		<div
+			class="flex items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5"
+		>
+			<Icon name="sparkles" class="mt-0.5 h-4 w-4 shrink-0 text-teal-300/70" />
+			<p class="min-w-0 flex-1 text-sm text-zinc-400">{tipp}</p>
+			<button
+				type="button"
+				onclick={tippAusblenden}
+				aria-label="Tipp für heute ausblenden"
+				class="shrink-0 text-zinc-600 transition-colors hover:text-zinc-300"
+			>
+				<Icon name="x" class="h-3.5 w-3.5" />
+			</button>
+		</div>
+	{/if}
 
 	<!-- In-App-Erinnerungen: nur sichtbar, wenn etwas ansteht -->
 	{#if erinnerungen.anzahl > 0}

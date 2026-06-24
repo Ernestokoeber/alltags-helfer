@@ -25,11 +25,11 @@ offline-fähig), Inline-SVG-Icons statt Emojis.
 ## Status
 
 In Umsetzung — alle 6 Tabs funktional, **installierbare PWA** (Service Worker +
-Offline), **154 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+Offline), **159 Unit-Tests grün** + **E2E-Smoke (Playwright)**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
 (Abschnitt „Umgesetzt").
 
 **Funktionen:** globale Sphären-Sicht Privat/Arbeit/Alles (in localStorage gemerkt),
-Heute (Schnellnotiz + Briefing + „Brücke" mit dem nächsten Termin je Sphäre),
+Heute (Schnellnotiz + Briefing + sanfter Tagestipp + „Brücke" mit dem nächsten Termin je Sphäre),
 Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie, Markdown), **Aufgaben**
 (projektübergreifend, Frist/Wiederholung), **Projekte** (laufende Vorhaben bündeln
 Notizen, verschachtelbar, archivierbar), Termine + **Monats-Kalender** (Kategorie,
