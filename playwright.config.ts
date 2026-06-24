@@ -8,6 +8,9 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
+	// Höher als der Default (5 s): der erste Request kompiliert die Route im Dev-Server
+	// erst (Kaltstart) und kann sonst knapp ins Timeout laufen.
+	expect: { timeout: 10_000 },
 	reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
 	use: {
 		baseURL: 'http://localhost:5173',

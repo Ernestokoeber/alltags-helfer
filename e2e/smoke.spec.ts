@@ -18,7 +18,8 @@ test('App lädt und alle Tabs sind über die Navigation erreichbar', async ({ pa
 		['Aufgaben', '/aufgaben'],
 		['Projekte', '/projekte'],
 		['Termine', '/termine'],
-		['Arbeit', '/arbeit']
+		['Arbeit', '/arbeit'],
+		['Tracking', '/tracking']
 	] as const;
 
 	for (const [tab, urlteil] of tabs) {
@@ -63,6 +64,15 @@ test('Arbeit-Tab: Pin, Kollegen-Notiz und Support-Fall', async ({ page }) => {
 	await page.getByPlaceholder('Problem', { exact: true }).fill('E2E Problem');
 	await page.getByRole('button', { name: 'Fall anlegen' }).click();
 	await expect(page.getByText('E2E Kunde')).toBeVisible();
+});
+
+test('Tracking: Eintrag erfassen', async ({ page }) => {
+	await page.goto('/tracking');
+	await page.getByRole('button', { name: 'AP1', exact: true }).first().click(); // Fach-Preset
+	await page.getByLabel('Dauer in Minuten').first().fill('45');
+	await page.getByRole('button', { name: 'Eintrag speichern' }).click();
+	// „Einträge"-Überschrift erscheint erst, wenn mindestens ein Eintrag existiert.
+	await expect(page.getByRole('heading', { name: 'Einträge' })).toBeVisible();
 });
 
 test('Sphären-Umschalter wechselt die aktive Sphäre', async ({ page }) => {

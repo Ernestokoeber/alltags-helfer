@@ -25,7 +25,7 @@ offline-fähig), Inline-SVG-Icons statt Emojis.
 ## Status
 
 In Umsetzung — alle 6 Tabs funktional, **installierbare PWA** (Service Worker +
-Offline), **159 Unit-Tests grün** + **E2E-Smoke (Playwright)**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+Offline), **172 Unit-Tests grün** + **E2E-Smoke (Playwright)**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
 (Abschnitt „Umgesetzt").
 
 **Funktionen:** globale Sphären-Sicht Privat/Arbeit/Alles (in localStorage gemerkt),
@@ -34,7 +34,8 @@ Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie, Markdown), **Aufga
 (projektübergreifend, Frist/Wiederholung), **Projekte** (laufende Vorhaben bündeln
 Notizen, verschachtelbar, archivierbar), Termine + **Monats-Kalender** (Kategorie,
 Vorbereitungs-Tasks, wiederkehrend), **Arbeit** (Kollegen-Notepad + Kundensupport-Log
-+ **Anheft-Bereich** für dauerhaft oben angepinnte Workflows), lokale Auto-Kategorie
++ **Anheft-Bereich** für dauerhaft oben angepinnte Workflows), **Tracking** (Zeit-/Lern-Erfassung
++ Dashboard: Tag/Woche/Fach/Streak), lokale Auto-Kategorie
 für „offen"-Notizen (kein Cloud), **Geräte-Sync** (E2EE, automatisch — bei Start, im
 Vordergrund, alle 2 Min und sofort nach jeder Änderung), **Push-Erinnerungen**
 (generisch, E2EE-konform) und **Datensicherung** (JSON-Export/-Import mit
