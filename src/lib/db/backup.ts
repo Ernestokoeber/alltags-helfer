@@ -8,7 +8,7 @@ import type { SyncMeta } from './types';
 // damit Löschungen den Umzug überleben.
 
 export const BACKUP_APP = 'alltags-helfer';
-export const BACKUP_SCHEMA = 6; // entspricht der Dexie-Schema-Version (v6: Arbeitsbereich)
+export const BACKUP_SCHEMA = 7; // entspricht der Dexie-Schema-Version (v7: Anheft-Bereich/Pins)
 
 const TABLES = [
 	'notes',
@@ -20,7 +20,8 @@ const TABLES = [
 	'projects',
 	'colleagues',
 	'colleagueNotes',
-	'supportCases'
+	'supportCases',
+	'pins'
 ] as const;
 type TableName = (typeof TABLES)[number];
 

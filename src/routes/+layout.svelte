@@ -12,6 +12,8 @@
 	import PanelTermine from '$lib/components/PanelTermine.svelte';
 	import PanelNotizen from '$lib/components/PanelNotizen.svelte';
 	import { syncState } from '$lib/sync-state.svelte';
+	import { db } from '$lib/db/db';
+	import { SYNC_TABLES } from '$lib/sync';
 	import { liveQuery } from 'dexie';
 	import { openTasks } from '$lib/db/notes';
 	import { upcomingAppointments } from '$lib/db/appointments';
@@ -53,6 +55,30 @@
 			document.removeEventListener('visibilitychange', onVisible);
 			clearInterval(id);
 		};
+	});
+
+	// Sofort-Sync: nach jedem lokalen Schreibvorgang einen entprellten Sync planen,
+	// damit Änderungen in Sekunden statt erst nach bis zu 2 Min beim anderen Gerät
+	// ankommen. Dexie-CRUD-Hooks auf allen Sync-Tabellen; triggerDebounced() ist
+	// ein No-op während eines laufenden Syncs (kein Remote-Apply-Echo).
+	$effect(() => {
+		const melde = () => syncState.triggerDebounced();
+		const abmelden: (() => void)[] = [];
+		for (const t of SYNC_TABLES) {
+			const tbl = db.table(t);
+			// Pro Ereignis einzeln registrieren — die Dexie-hook-Überladungen haben je
+			// Ereignis unterschiedliche Callback-Signaturen (eine Schleife über den
+			// Union-Typ ließe sich nicht typisieren).
+			tbl.hook('creating', melde);
+			tbl.hook('updating', melde);
+			tbl.hook('deleting', melde);
+			abmelden.push(() => {
+				tbl.hook('creating').unsubscribe(melde);
+				tbl.hook('updating').unsubscribe(melde);
+				tbl.hook('deleting').unsubscribe(melde);
+			});
+		}
+		return () => abmelden.forEach((fn) => fn());
 	});
 
 	const nav: { href: string; label: string; icon: IconName }[] = [

@@ -97,6 +97,13 @@ export interface SupportCase extends SyncMeta {
 	resolvedAt?: number | null;
 }
 
+// Angeheftete Notiz/Workflow, der dauerhaft oben unter der Überschrift eines Tabs
+// bleibt. `scope` bestimmt den Tab (vorerst nur 'arbeit', bewusst erweiterbar).
+export interface Pin extends SyncMeta {
+	scope: string;
+	content: string;
+}
+
 export interface TimeEntry extends SyncMeta {
 	sourceApp: string;
 	activity: string;

@@ -25,19 +25,21 @@ offline-fähig), Inline-SVG-Icons statt Emojis.
 ## Status
 
 In Umsetzung — alle 6 Tabs funktional, **installierbare PWA** (Service Worker +
-Offline), **77 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
+Offline), **154 Tests grün**. Changelog/Details in **[PROJEKT.md](./PROJEKT.md)**
 (Abschnitt „Umgesetzt").
 
 **Funktionen:** globale Sphären-Sicht Privat/Arbeit/Alles (in localStorage gemerkt),
 Heute (Schnellnotiz + Briefing + „Brücke" mit dem nächsten Termin je Sphäre),
-Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie), **Projekte**
-(laufende Vorhaben bündeln Notizen, Detailansicht mit Projekt-Notiz, archivierbar),
-Termine (mit Kategorie + Vorbereitungs-Tasks), Bucketlist (Beschreibung/Zieldatum/
-Kategorie, Erledigte ausblendbar), Schlaf (Dauer + Wochenschnitt + Bearbeiten),
-lokale Auto-Kategorie für „offen"-Notizen (kein Cloud), **Datensicherung**
-(JSON-Export/-Import mit Last-Write-Wins-Merge, unter Einstellungen). Installierbar
-(Manifest + Icons), offline-fähig, `storage.persist()` + Warnung bei blockierter
-IndexedDB.
+Notizen (Suche/Kategoriefilter/Bearbeiten/Tags/Pin/Kategorie, Markdown), **Aufgaben**
+(projektübergreifend, Frist/Wiederholung), **Projekte** (laufende Vorhaben bündeln
+Notizen, verschachtelbar, archivierbar), Termine + **Monats-Kalender** (Kategorie,
+Vorbereitungs-Tasks, wiederkehrend), **Arbeit** (Kollegen-Notepad + Kundensupport-Log
++ **Anheft-Bereich** für dauerhaft oben angepinnte Workflows), lokale Auto-Kategorie
+für „offen"-Notizen (kein Cloud), **Geräte-Sync** (E2EE, automatisch — bei Start, im
+Vordergrund, alle 2 Min und sofort nach jeder Änderung), **Push-Erinnerungen**
+(generisch, E2EE-konform) und **Datensicherung** (JSON-Export/-Import mit
+Last-Write-Wins-Merge, unter Einstellungen). Installierbar (Manifest + Icons),
+offline-fähig, `storage.persist()` + Warnung bei blockierter IndexedDB.
 
 ## Deployment (GitHub Pages)
 

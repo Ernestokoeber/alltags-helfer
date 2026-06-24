@@ -9,7 +9,8 @@ import type {
 	Project,
 	Colleague,
 	ColleagueNote,
-	SupportCase
+	SupportCase,
+	Pin
 } from './types';
 
 // Local-first Datenbank (IndexedDB via Dexie). Das Schema ist sync-fähig:
@@ -26,6 +27,7 @@ export class AppDB extends Dexie {
 	colleagues!: Table<Colleague, string>;
 	colleagueNotes!: Table<ColleagueNote, string>;
 	supportCases!: Table<SupportCase, string>;
+	pins!: Table<Pin, string>;
 
 	constructor() {
 		super('alltags-helfer');
@@ -79,6 +81,11 @@ export class AppDB extends Dexie {
 			colleagues: '&id, name, updatedAt, deletedAt',
 			colleagueNotes: '&id, colleagueId, done, createdAt, updatedAt, deletedAt',
 			supportCases: '&id, status, createdAt, updatedAt, deletedAt'
+		});
+		// v7: Anheft-Bereich (Pins) — pro Tab angepinnte Notizen/Workflows.
+		// Additiv (nur neue Tabelle), daher keine Daten-Migration nötig.
+		this.version(7).stores({
+			pins: '&id, scope, createdAt, updatedAt, deletedAt'
 		});
 	}
 }

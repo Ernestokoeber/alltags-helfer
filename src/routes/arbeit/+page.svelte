@@ -19,11 +19,42 @@
 		updateSupportCase,
 		deleteSupportCase
 	} from '$lib/db/support';
-	import type { Colleague, ColleagueNote, SupportCase } from '$lib/db/types';
+	import { addPin, pinsForScope, updatePin, deletePin } from '$lib/db/pins';
+	import type { Colleague, ColleagueNote, SupportCase, Pin } from '$lib/db/types';
 	import Icon from '$lib/components/Icon.svelte';
 
 	type Bereich = 'kollegen' | 'support';
 	let bereich = $state<Bereich>('kollegen');
+
+	// --- Anheft-Bereich (Pins, immer sichtbar unter der Überschrift) ---
+	const PIN_SCOPE = 'arbeit';
+	let pins = $state<Pin[]>([]);
+	$effect(() => {
+		const sub = liveQuery(() => pinsForScope(PIN_SCOPE)).subscribe((v) => (pins = v));
+		return () => sub.unsubscribe();
+	});
+
+	let pinAddOffen = $state(false);
+	let pinText = $state('');
+	let pinEditId = $state<string | null>(null);
+	let pinEditText = $state('');
+
+	async function pinAnlegen() {
+		const p = await addPin(PIN_SCOPE, pinText);
+		if (p) {
+			pinText = '';
+			pinAddOffen = false;
+		}
+	}
+	function startePinEdit(p: Pin) {
+		pinEditId = p.id;
+		pinEditText = p.content;
+	}
+	async function pinSpeichern(id: string) {
+		await updatePin(id, pinEditText);
+		pinEditId = null;
+		pinEditText = '';
+	}
 
 	// Kollegen beim ersten Laden anlegen (idempotent, feste IDs → kein Sync-Duplikat).
 	$effect(() => {
@@ -121,6 +152,101 @@
 
 <section class="space-y-4">
 	<h2 class="text-2xl font-bold tracking-tight">Arbeit</h2>
+
+	<!-- Anheft-Bereich: dauerhaft angepinnte Workflows/Notizen, immer sichtbar
+	     (unabhängig vom Kollegen/Support-Umschalter). -->
+	<div class="card space-y-2.5 p-4 lg:max-w-2xl">
+		<div class="flex items-center justify-between">
+			<span class="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+				<Icon name="bookmark" class="h-3.5 w-3.5" />
+				Angeheftet
+			</span>
+			{#if !pinAddOffen}
+				<button
+					type="button"
+					onclick={() => {
+						pinAddOffen = true;
+						pinText = '';
+					}}
+					class="text-xs text-zinc-500 transition-colors hover:text-zinc-200">+ anheften</button
+				>
+			{/if}
+		</div>
+
+		{#if pinAddOffen}
+			<div class="space-y-2">
+				<textarea
+					bind:value={pinText}
+					rows="3"
+					placeholder="Workflow oder Notiz, die oben angeheftet bleibt …"
+					class="field resize-none"
+				></textarea>
+				<div class="flex justify-end gap-2">
+					<button
+						type="button"
+						onclick={() => (pinAddOffen = false)}
+						class="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200">Abbrechen</button
+					>
+					<button type="button" onclick={pinAnlegen} disabled={!pinText.trim()} class="btn-primary"
+						>Anheften</button
+					>
+				</div>
+			</div>
+		{/if}
+
+		{#if pins.length === 0}
+			{#if !pinAddOffen}
+				<p class="text-sm text-zinc-500">Noch nichts angeheftet.</p>
+			{/if}
+		{:else}
+			<ul class="space-y-2">
+				{#each pins as p (p.id)}
+					<li class="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+						{#if pinEditId === p.id}
+							<div class="space-y-2">
+								<textarea bind:value={pinEditText} rows="3" class="field resize-none"></textarea>
+								<div class="flex justify-end gap-2">
+									<button
+										type="button"
+										onclick={() => (pinEditId = null)}
+										class="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200">Abbrechen</button
+									>
+									<button
+										type="button"
+										onclick={() => pinSpeichern(p.id)}
+										disabled={!pinEditText.trim()}
+										class="btn-primary">Speichern</button
+									>
+								</div>
+							</div>
+						{:else}
+							<div class="flex items-start gap-3">
+								<p class="min-w-0 flex-1 text-sm whitespace-pre-wrap text-zinc-100">{p.content}</p>
+								<div class="flex shrink-0 items-center gap-2">
+									<button
+										type="button"
+										onclick={() => startePinEdit(p)}
+										aria-label="Bearbeiten"
+										class="text-zinc-500 transition-colors hover:text-zinc-200"
+									>
+										<Icon name="pencil" class="h-4 w-4" />
+									</button>
+									<button
+										type="button"
+										onclick={() => deletePin(p.id)}
+										aria-label="Lösen"
+										class="text-zinc-600 transition-colors hover:text-rose-400"
+									>
+										<Icon name="x" class="h-4 w-4" />
+									</button>
+								</div>
+							</div>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
 
 	<!-- Bereich-Umschalter -->
 	<div class="inline-flex rounded-full border border-white/10 bg-white/[0.05] p-1">
